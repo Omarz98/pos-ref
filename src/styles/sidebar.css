@@ -1,0 +1,47 @@
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar {
+  width: 240px;
+  background: var(--bg);
+  padding: 24px;
+  flex-shrink: 0;
+  color: var(--text);
+}
+
+.sidebar h2 {
+  margin-bottom: 32px;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar a,
+.menu-link,
+.menu-link:link,
+.menu-link:visited,
+.menu-link:hover,
+.menu-link:active {
+  text-decoration: none;
+}
+
+.sidebar a {
+  padding: 12px;
+  border-radius: 10px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.sidebar a.active,
+.sidebar a:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.hamburger-btn {
+  display: none;
+}

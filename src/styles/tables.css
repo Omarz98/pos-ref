@@ -1,0 +1,37 @@
+/* =========================
+   TABLES
+========================= */
+
+.panel-header {
+  display: grid;
+  /*grid-template-columns: minmax(180px, 280px) minmax(220px, 1fr);*/
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  color: var(--muted);
+  font-size: 14px;
+  padding-bottom: 12px;
+}
+
+td {
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  word-break: break-word;
+  white-space: normal;
+}

@@ -1,0 +1,48 @@
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.card,
+.products-panel,
+.cart-panel,
+.workshop {
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  color: var(--text);
+}
+
+.card {
+  padding: 20px;
+}
+
+.card span {
+  color: var(--muted);
+}
+
+.card h3 {
+  font-size: 26px;
+  margin: 10px 0 0;
+}
+
+.products-panel,
+.cart-panel,
+.workshop {
+  width: 100%;
+  min-width: 0;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-panel h2 {
+  margin-top: 0;
+}
+
+.workshop {
+  margin-top: 24px;
+}

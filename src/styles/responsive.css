@@ -1,0 +1,118 @@
+/* =========================
+   RESPONSIVE MOBILE
+========================= */
+
+@media (max-width: 768px) {
+  .app {
+    flex-direction: column;
+  }
+
+  .hamburger-btn {
+    display: block;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 1001;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 22px;
+    cursor: pointer;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    width: 260px;
+    height: 100vh;
+    z-index: 1000;
+    padding-top: 70px;
+    transition: left 0.3s ease;
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .sidebar nav {
+    flex-direction: column;
+    overflow-x: initial;
+  }
+
+  .sidebar a {
+    width: 100%;
+    color: var(--sidebar-text);
+  }
+
+  .sidebar a.active {
+    background: var(--primary);
+    color: white;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 999;
+  }
+
+  .main {
+    padding: 76px 16px 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-actions,
+  .primary-btn,
+  .theme-btn {
+    width: 100%;
+  }
+
+  .cards,
+  .orders {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-header {
+    grid-template-columns: 1fr;
+  }
+
+  .products-panel,
+  .cart-panel,
+  .workshop {
+    padding: 16px;
+  }
+
+  .order-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* =========================
+   RESPONSIVE TABLET
+========================= */
+
+@media (max-width: 1100px) {
+  .cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+  }
+
+  .cart-panel {
+    order: 1;
+  }
+
+  .products-panel {
+    order: 2;
+  }
+}

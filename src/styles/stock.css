@@ -1,0 +1,15 @@
+/* =========================
+   STOCK
+========================= */
+
+.stock {
+  background: #dcfce7;
+  color: #166534;
+  padding: 5px 10px;
+  border-radius: 20px;
+}
+
+.stock.low {
+  background: #fee2e2;
+  color: #991b1b;
+}

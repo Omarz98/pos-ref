@@ -1,0 +1,32 @@
+/* =========================
+   VARIABLES
+========================= */
+
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-2: #f9fafb;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --sidebar: #111827;
+  --sidebar-text: #d1d5db;
+  --primary: #2563eb;
+  --success: #16a34a;
+  --shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface-2: #334155;
+  --text: #f8fafc;
+  --muted: #cbd5e1;
+  --border: #334155;
+  --sidebar: #020617;
+  --sidebar-text: #cbd5e1;
+  --primary: #3b82f6;
+  --success: #22c55e;
+  --shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
