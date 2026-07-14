@@ -1,0 +1,189 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 999;
+}
+
+.modal-cobro {
+  width: 100%;
+  max-width: 650px;
+
+  background: var(--surface);
+  color: var(--text);
+
+  border-radius: 16px;
+  overflow: hidden;
+
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  padding: 20px;
+  border-top: 1px solid var(--border);
+
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.summary {
+  margin-bottom: 20px;
+}
+
+.summary div {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.grand-total {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.payment-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 50px;
+  gap: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+
+}
+
+.payment-row select,
+.payment-row input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.add-payment-btn {
+    padding: 15px;
+    border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  width: 100%;
+  margin-top: 10px;
+  color: #e0ecff;
+  background: #000000;
+}
+
+.add-payment-btn:hover {
+  background: #000000;
+  transform: translateY(-1px);
+}
+
+.payment-summary {
+  margin-top: 20px;
+}
+
+.payment-summary div {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.pending {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.change {
+  color: #10b981;
+  font-weight: 700;
+}
+
+.confirm-btn {
+  padding: 15px;
+    border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  width: 50%;
+  margin-top: 10px;
+  background: #10b981;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.secondary-btn {
+  padding: 15px;
+    border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  width: 50%;
+  margin-top: 10px;
+  background: #ef4444;
+  color: white;
+}
+
+.secondary-btn:hover {
+    background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.close-btn {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.remove-payment-btn {
+  height: 42px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+
+  background: #ef4444;
+  color: white;
+
+  transition: all 0.2s ease;
+}
+
+.remove-payment-btn:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.remove-payment-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-group{
+    padding: 20px;
+  border-top: 1px solid var(--border);
+
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+}

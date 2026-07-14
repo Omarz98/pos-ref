@@ -12,6 +12,8 @@ import { MotoMarcas } from "./pages/MotoMarcas";
 import { MotoModelos } from "./pages/MotoModelos";
 import { MotoVersiones} from "./pages/MotoVersiones"
 import { Clientes } from "./pages/Clientes"
+import { Servicios } from "./pages/Servicios";
+import { Ventas } from "./pages/Ventas";
 
 function App() {
   
@@ -41,6 +43,7 @@ function App() {
         <nav>
           
           <NavLink to="/pos" onClick={closeMenu} className="menu-link">Punto de venta</NavLink>
+          <NavLink to="/ventas" onClick={closeMenu} className="menu-link">Ventas</NavLink>
           <NavLink to="/categorias" onClick={closeMenu} className="menu-link">Categorias</NavLink>
           <NavLink to="/proveedores" onClick={closeMenu} className="menu-link">Proveedores</NavLink>
           <NavLink to="/marcas" onClick={closeMenu} className="menu-link">Marcas</NavLink>
@@ -49,6 +52,7 @@ function App() {
           <NavLink to="/motomodelos" onClick={closeMenu} className="menu-link">Moto Modelos</NavLink>
           <NavLink to="/motoversion" onClick={closeMenu} className="menu-link">Moto Versiones</NavLink>
           <NavLink to="/clientes" onClick={closeMenu} className="menu-link">Clientes</NavLink>
+          <NavLink to="/servicios" onClick={closeMenu} className="menu-link">Servicios</NavLink>
           <NavLink to="/inventario" onClick={closeMenu} className="menu-link">Inventario</NavLink>
           <NavLink to="/taller" onClick={closeMenu} className="menu-link">Taller</NavLink>
           <NavLink to="/reportes" onClick={closeMenu} className="menu-link">Reportes</NavLink>
@@ -72,6 +76,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home/>} />
           <Route path="/pos" element={<PuntoVenta/>} />
+          <Route path="/ventas" element={<Ventas />} />
           <Route path="/categorias" element={<Categorias/>} />
           <Route path="/proveedores" element={<Proveedores/>} />
           <Route path="/marcas" element={<Marcas/>} />
@@ -80,6 +85,7 @@ function App() {
           <Route path="/motomodelos" element={<MotoModelos />} />
           <Route path="/motoversion" element={<MotoVersiones />} />
           <Route path="/clientes" element={<Clientes />} />
+          <Route path="/servicios" element={<Servicios />} />
           <Route path="/inventario" element={<Inventario />} />
           <Route path="/taller" element={<Taller />} />
           <Route path="/reportes" element={<Reportes />} />

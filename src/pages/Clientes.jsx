@@ -178,8 +178,8 @@ export function Clientes(){
       />
 
       <FormCard
-        title={editandoId ? "Editar categoría" : "Nueva categoría"}
-        buttonText={editandoId ? "Actualizar categoría" : "Guardar categoría"}
+        title={editandoId ? "Editar cliente" : "Nueva cliente"}
+        buttonText={editandoId ? "Actualizar cliente" : "Guardar cliente"}
         onSubmit={crearCliente}
       >
         <div className="form-group">

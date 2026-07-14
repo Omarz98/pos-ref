@@ -266,18 +266,18 @@ export function Productos() {
   };
 
   const columns = [
-    { key: "codigo", label: "NIC" },
+    /*{ key: "codigo", label: "NIC" },*/
     { key: "codigoBarras", label: "Codigo" },
     { key: "nombre", label: "Nombre" },
     { key: "descripcion", label: "Descripcion" },
-    { key: "categoriaNombre", label: "Categoría" },
-    { key: "marcaNombre", label: "Marca" },
-    { key: "proveedorNombre", label: "Proveedor" },
+    /*{ key: "categoriaNombre", label: "Categoría" },*/
+    /*{ key: "marcaNombre", label: "Marca" },*/
+    /*{ key: "proveedorNombre", label: "Proveedor" },*/
     { key: "precioCompra", label: "Precio Compra" },
     { key: "precioVenta", label: "Precio Venta" },
     { key: "stock", label: "Stock" },
-    { key: "stockMinimo", label: "stockMinimo" },
-    { key: "unidadMedida", label: "Unidad" },
+    /*{ key: "stockMinimo", label: "Stock Minimo" },*/
+    /*{ key: "unidadMedida", label: "Unidad" },*/
   ];
 
   const actions = [

@@ -1,0 +1,58 @@
+.cart-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cart-actions button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+/* Disminuir */
+/*
+.btn-minus {
+  background: #f59e0b;
+  color: white;
+}
+*/  
+.btn-minus:hover {
+  background: #d97706;
+  transform: translateY(-1px);
+}
+
+/* Aumentar */
+/*
+.btn-plus {
+  background: #10b981;
+  color: white;
+}
+*/
+.btn-plus:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+/* Eliminar */
+.btn-delete-cart {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-delete-cart:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.cart-actions span {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text);
+}

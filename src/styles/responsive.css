@@ -113,6 +113,11 @@
   }
 
   .products-panel {
-    order: 2;
+    background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  color: var(--text);
+  padding: 24px;
+  overflow: hidden;
   }
 }
