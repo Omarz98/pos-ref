@@ -62,7 +62,7 @@
 
 .payment-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 50px;
+  grid-template-columns: 1fr 1fr 50px 50px;
   gap: 10px;
   margin-bottom: 10px;
   align-items: center;
@@ -77,7 +77,18 @@
 }
 
 .add-payment-btn {
-    padding: 15px;
+  height: 42px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+
+  color: #e0ecff;
+  background: #000000;
+
+  transition: all 0.2s ease;
+
+
+    /*padding: 15px;
     border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -86,7 +97,7 @@
   width: 100%;
   margin-top: 10px;
   color: #e0ecff;
-  background: #000000;
+  background: #000000;*/
 }
 
 .add-payment-btn:hover {
@@ -180,10 +191,81 @@
 
 .form-group{
     padding: 20px;
-  border-top: 1px solid var(--border);
+  /*border-top: 1px solid var(--border);*/
 
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 
+}
+
+/*Modal moto*/
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 750px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.modal-header h2 {
+  margin: 0;
+}
+
+.modal-header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.modal-close {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-moto {
+  color: #2563eb;
+}
+
+@media (max-width: 650px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
 }

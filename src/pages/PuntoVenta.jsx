@@ -11,36 +11,15 @@ export function PuntoVenta() {
   const [clientes, setClientes] = useState([]);
   const [clienteId, setClienteId] = useState("");
   const [servicios, setServicios] = useState([]);
+  const [ordenes, setOrdenes] = useState([]);
+  const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
 
   useEffect(() => {
     fetchProductos();
     fetchClientes();
     fetchServicios();
+    fetchOrdenesPendientes();
   }, []);
-
-  /*const [servicios, setServicio] = useState([
-    {
-      id: 1,
-      codigo: "SERV-001",
-      nombre: "Cambio de aceite",
-      precioVenta: 150,
-      activo: true,
-    },
-    {
-      id: 2,
-      codigo: "SERV-002",
-      nombre: "Cambio de balatas",
-      precioVenta: 250,
-      activo: true,
-    },
-    {
-      id: 3,
-      codigo: "SERV-003",
-      nombre: "Afinación básica",
-      precioVenta: 350,
-      activo: true,
-    },
-  ]);*/
 
   const [pagos, setPagos] = useState([
     {
@@ -67,37 +46,6 @@ export function PuntoVenta() {
 
     setPagos(pagos.filter((_, i) => i !== index));
   };
-
-  /*const productos = [
-    {
-      codigo: "REF-001",
-      nombre: "Aceite 4T 20W50",
-      categoria: "Lubricantes",
-      stock: 18,
-      precio: 165,
-    },
-    {
-      codigo: "REF-002",
-      nombre: "Bujía NGK",
-      categoria: "Encendido",
-      stock: 35,
-      precio: 85,
-    },
-    {
-      codigo: "REF-003",
-      nombre: "Balatas delanteras",
-      categoria: "Frenos",
-      stock: 12,
-      precio: 240,
-    },
-    {
-      codigo: "REF-004",
-      nombre: "Filtro de aire Italika",
-      categoria: "Filtros",
-      stock: 9,
-      precio: 130,
-    },
-  ];*/
 
   const fetchProductos = async () => {
     try {
@@ -128,6 +76,23 @@ export function PuntoVenta() {
     }
   };
 
+  const fetchOrdenesPendientes = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:8080/api/ordenes-taller/pendientes",
+      );
+
+      if (!response.ok) {
+        throw new Error("No fue posible obtener las órdenes pendientes");
+      }
+
+      const data = await response.json();
+      setOrdenes(data);
+    } catch (error) {
+      console.error("Error al obtener órdenes de servicio:", error);
+    }
+  };
+
   /*const serviciosMap = Object.fromEntries(
     servicios.map((s) => [s.id, s.nombre]),
   );*/
@@ -137,7 +102,7 @@ export function PuntoVenta() {
     ...producto,
     ...servicios,
   }));*/
-  const productosYServiciosTabla = [
+  /*const productosYServiciosTabla = [
     ...productos.map((p) => ({
       ...p,
       tipo: "PRODUCTO",
@@ -147,24 +112,75 @@ export function PuntoVenta() {
       ...s,
       tipo: "SERVICIO",
     })),
-  ];
+  ];*/
 
-  const productosFiltrados = productosYServiciosTabla.filter(
+  const elementosPOS = [
+    ...productos.map((producto) => ({
+      ...producto,
+      tipo: "PRODUCTO",
+      precioMostrar: Number(producto.precioVenta || 0),
+    })),
+
+    ...servicios.map((servicio) => ({
+      ...servicio,
+      tipo: "SERVICIO",
+      codigo: servicio.codigo || `SERV-${servicio.id}`,
+      precioMostrar: Number(servicio.precioVenta || 0),
+      stockActual: null,
+    })),
+
+    ...ordenes.map((orden) => ({
+      ...orden,
+      tipo: "ORDEN",
+      folio: orden.folio,
+      nombre: `Orden ${orden.folio} - ${orden.clienteNombre || "Cliente"}`,
+      precioVenta: Number(
+        orden.saldoPendiente != null ? orden.saldoPendiente : orden.total || 0,
+      ),
+      precioMostrar: Number(
+        orden.saldoPendiente != null ? orden.saldoPendiente : orden.total || 0,
+      ),
+      stockActual: null,
+      activo: true,
+    })),
+  ];
+  /*const productosFiltrados = productosYServiciosTabla.filter(
     (producto) =>
       producto.activo &&
       (producto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
         producto.codigo.toLowerCase().includes(busqueda.toLowerCase())),
-  );
+  );*/
+  const elementosFiltrados = elementosPOS.filter((elemento) => {
+    const texto = busqueda.trim().toLowerCase();
+
+    if (!elemento.activo) {
+      return false;
+    }
+
+    if (!texto) {
+      return true;
+    }
+
+    const nombre = String(elemento.nombre || "").toLowerCase();
+    const codigo = String(elemento.codigo || "").toLowerCase();
+    const numeroOrden = String(elemento.numeroOrden || "").toLowerCase();
+    const clienteNombre = String(elemento.clienteNombre || "").toLowerCase();
+
+    return (
+      nombre.includes(texto) ||
+      codigo.includes(texto) ||
+      numeroOrden.includes(texto) ||
+      clienteNombre.includes(texto)
+    );
+  });
 
   const agregarProducto = (producto) => {
-   
     const existe = carrito.find(
       (item) => item.id === producto.codigo && item.tipo === "PRODUCTO",
     );
     if (existe) {
-      
-      if (existe.cantidad >= producto.stock) {
-        alert(`Solo hay ${producto.stock} unidades disponibles`);
+      if (existe.cantidad >= producto.stockActual) {
+        alert(`Solo hay ${producto.stockActual} unidades disponibles`);
         return;
       }
 
@@ -176,7 +192,7 @@ export function PuntoVenta() {
         ),
       );
     } else {
-      if (producto.stock <= 0) {
+      if (producto.stockActual <= 0) {
         alert("Producto sin existencias");
         return;
       }
@@ -184,7 +200,7 @@ export function PuntoVenta() {
       setCarrito([
         ...carrito,
         {
-          id: producto.codigo,
+          id: producto.id,
           tipo: producto.tipo,
           nombre: producto.nombre,
           cantidad: 1,
@@ -192,7 +208,6 @@ export function PuntoVenta() {
         },
       ]);
     }
-    
   };
 
   const agregarServicio = (servicio) => {
@@ -208,15 +223,116 @@ export function PuntoVenta() {
     ]);
   };
 
+  const cargarOrdenEnCarrito = (orden) => {
+    const servicios = Array.isArray(orden.servicios) ? orden.servicios : [];
+
+    const productos = Array.isArray(orden.productos) ? orden.productos : [];
+
+    if (servicios.length === 0 && productos.length === 0) {
+      alert("La orden no contiene productos o servicios");
+      return;
+    }
+
+    if (carrito.length > 0) {
+      const reemplazar = window.confirm(
+        "La venta actual contiene elementos. ¿Deseas reemplazarla con la orden?",
+      );
+
+      if (!reemplazar) {
+        return;
+      }
+    }
+
+    const serviciosCarrito = servicios.map((servicio) => ({
+      id: `SERVICIO-${servicio.servicioId ?? servicio.id}`,
+
+      detalleOrdenId: servicio.id,
+
+      productoId: null,
+
+      servicioId: servicio.servicioId ?? servicio.id,
+
+      codigo: servicio.codigo ?? "",
+
+      tipo: "SERVICIO",
+
+      nombre:
+        servicio.nombre ?? servicio.servicioNombre ?? "Servicio sin nombre",
+
+      cantidad: Number(servicio.cantidad ?? 1),
+
+      precio: Number(servicio.precioUnitario ?? servicio.precio ?? 0),
+
+      origenOrden: true,
+    }));
+
+    const productosCarrito = productos.map((producto) => ({
+      id: `PRODUCTO-${producto.productoId ?? producto.id}`,
+
+      detalleOrdenId: producto.id,
+
+      productoId: producto.productoId ?? producto.id,
+
+      servicioId: null,
+
+      codigo: producto.codigo ?? "",
+
+      tipo: "PRODUCTO",
+
+      nombre:
+        producto.nombre ?? producto.productoNombre ?? "Producto sin nombre",
+
+      cantidad: Number(producto.cantidad ?? 1),
+
+      precio: Number(producto.precioUnitario ?? producto.precio ?? 0),
+
+      origenOrden: true,
+    }));
+
+    const elementosCarrito = [...serviciosCarrito, ...productosCarrito];
+
+    setCarrito(elementosCarrito);
+    setOrdenSeleccionada(orden);
+    setClienteId(String(orden.clienteId ?? ""));
+
+    setPagos([
+      {
+        metodo: "EFECTIVO",
+        monto: Number(orden.saldoPendiente ?? orden.total ?? 0),
+      },
+    ]);
+
+    setBusqueda("");
+  };
+
+  const seleccionarElemento = (elemento) => {
+    switch (elemento.tipo) {
+      case "PRODUCTO":
+        agregarProducto(elemento);
+        break;
+
+      case "SERVICIO":
+        agregarServicio(elemento);
+        break;
+
+      case "ORDEN":
+        cargarOrdenEnCarrito(elemento);
+        break;
+
+      default:
+        console.warn("Tipo de elemento desconocido:", elemento.tipo);
+    }
+  };
+
   const aumentarCantidad = (itemCarrito) => {
     const producto = productos.find((p) => p.codigo === itemCarrito.id);
 
     if (
       itemCarrito.tipo === "PRODUCTO" &&
       producto &&
-      itemCarrito.cantidad >= producto.stock
+      itemCarrito.cantidad >= producto.stockActual
     ) {
-      alert(`Solo hay ${producto.stock} piezas disponibles`);
+      alert(`Solo hay ${producto.stockActual} piezas disponibles`);
       return;
     }
 
@@ -248,13 +364,13 @@ export function PuntoVenta() {
     setCarrito(carrito.filter((item) => item.id !== id));
   };
 
-  const subtotal = carrito.reduce(
+  const total = carrito.reduce(
     (acc, item) => acc + item.cantidad * item.precio,
     0,
   );
 
-  const iva = subtotal * 0.16;
-  const total = subtotal;
+  const subtotal = total / 1.16;
+  const iva = total - subtotal;
 
   const totalPagado = pagos.reduce(
     (acc, pago) => acc + Number(pago.monto || 0),
@@ -276,7 +392,7 @@ export function PuntoVenta() {
       return;
     }
 
-    const venta = {
+    /*const venta = {
       items: carrito,
 
       subtotal,
@@ -290,9 +406,41 @@ export function PuntoVenta() {
       saldoPendiente,
 
       estado: saldoPendiente <= 0 ? "PAGADA" : "PENDIENTE",
+    };*/
+    const venta = {
+      ordenServicioId: ordenSeleccionada?.id || null,
+
+      clienteId: clienteId ? Number(clienteId) : null,
+
+      items: carrito.map((item) => ({
+        productoId: item.productoId || null,
+        servicioId: item.servicioId || null,
+        detalleOrdenId: item.detalleOrdenId || null,
+        codigo: item.codigo || item.id,
+        tipo: item.tipo,
+        nombre: item.nombre,
+        cantidad: Number(item.cantidad),
+        precio: Number(item.precio),
+      })),
+
+      subtotal: Number(subtotal.toFixed(2)),
+      iva: Number(iva.toFixed(2)),
+      total: Number(total.toFixed(2)),
+
+      pagos: pagos.map((pago) => ({
+        metodo: pago.metodo,
+        monto: Number(pago.monto || 0),
+      })),
+
+      totalPagado: Number(totalPagado.toFixed(2)),
+
+      saldoPendiente: Number(Math.max(saldoPendiente, 0).toFixed(2)),
+
+      estado: saldoPendiente <= 0 ? "PAGADA" : "PENDIENTE",
     };
 
     /*console.log(JSON.stringify(venta, null, 2));*/
+    console.log(venta);
 
     try {
       const response = await fetch("http://localhost:8080/api/ventas", {
@@ -304,12 +452,19 @@ export function PuntoVenta() {
       });
 
       if (!response.ok) {
-        throw new Error("Error al registrar venta");
+        const mensaje = await response.text();
+        throw new Error(mensaje || "Error al registrar venta");
       }
 
-      alert("Venta registrada correctamente");
+      alert(
+        ordenSeleccionada
+          ? `Orden ${ordenSeleccionada.folio} cobrada correctamente`
+          : "Venta registrada correctamente",
+      );
 
       setCarrito([]);
+      setOrdenSeleccionada(null);
+      setClienteId("");
 
       setPagos([
         {
@@ -317,27 +472,62 @@ export function PuntoVenta() {
           monto: 0,
         },
       ]);
+
       setShowCobroModal(false);
       setBusqueda("");
+
+      await Promise.all([fetchProductos(), fetchOrdenesPendientes()]);
     } catch (error) {
       console.error(error);
       alert("Error al registrar venta");
     }
   };
 
-  const columns = [
+  /*const columns = [
     { key: "codigo", label: "NIC" },
     { key: "nombre", label: "Nombre" },
     { key: "precioVenta", label: "Precio Venta" },
-    { key: "stock", label: "Stock" },
+    { key: "stockActual", label: "Stock" },
+  ];*/
+  const columns = [
+    {
+      key: "codigo",
+      label: "Código / Orden",
+    },
+    {
+      key: "nombre",
+      label: "Descripción",
+    },
+    {
+      key: "tipo",
+      label: "Tipo",
+    },
+    {
+      key: "precioVenta",
+      label: "Precio",
+      render: (row) => `$${Number(row.precioVenta || 0).toFixed(2)}`,
+    },
+    {
+      key: "stockActual",
+      label: "Stock",
+      render: (row) => (row.tipo === "PRODUCTO" ? row.stockActual : "N/A"),
+    },
   ];
 
-  const actions = [
+  /*const actions = [
     {
       icon: <MdAddShoppingCart />,
       title: "Agregar a carrito",
       className: "btn-action btn-edit",
       onClick: agregarProducto,
+    },
+  ];*/
+  const actions = [
+    {
+      icon: <MdAddShoppingCart />,
+      title: "Agregar o cargar",
+      className: "btn-action btn-edit",
+      onClick: seleccionarElemento,
     },
   ];
   return (
@@ -356,17 +546,42 @@ export function PuntoVenta() {
       <section className="content">
         <section className="content-table-productos">
           <DataTable
-            title="Buscar Refaccion o Servicio"
-            searchPlaceholder="Buscar Productos..."
+            title="Buscar refacción, servicio u orden"
+            searchPlaceholder="Buscar por código, nombre o número de orden..."
             searchValue={busqueda}
             onSearchChange={setBusqueda}
             columns={columns}
-            data={productosFiltrados}
+            data={elementosFiltrados}
             actions={actions}
           />
         </section>
 
         <aside className="cart-panel">
+          {ordenSeleccionada && (
+            <div className="selected-order">
+              <div>
+                <span>Orden de servicio</span>
+                <strong>{ordenSeleccionada.folio}</strong>
+              </div>
+
+              <div>
+                <span>Cliente</span>
+                <strong>{ordenSeleccionada.clienteNombre}</strong>
+              </div>
+
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() => {
+                  setOrdenSeleccionada(null);
+                  setCarrito([]);
+                  setClienteId("");
+                }}
+              >
+                Quitar orden
+              </button>
+            </div>
+          )}
           <h2>Venta actual</h2>
 
           {carrito.map((c) => (
@@ -377,34 +592,35 @@ export function PuntoVenta() {
                 <p>
                   {c.cantidad} x ${c.precio.toFixed(2)}
                 </p>
+                {!ordenSeleccionada && (
+                  <div className="cart-actions">
+                    <button
+                      className="btn-minus"
+                      title="Quitar"
+                      onClick={() => disminuirCantidad(c)}
+                    >
+                      -
+                    </button>
 
-                <div className="cart-actions">
-                  <button
-                    className="btn-minus"
-                    title="Quitar"
-                    onClick={() => disminuirCantidad(c)}
-                  >
-                    -
-                  </button>
+                    <span>{c.cantidad}</span>
 
-                  <span>{c.cantidad}</span>
+                    <button
+                      className="btn-plus"
+                      title="Agregar"
+                      onClick={() => aumentarCantidad(c)}
+                    >
+                      +
+                    </button>
 
-                  <button
-                    className="btn-plus"
-                    title="Agregar"
-                    onClick={() => aumentarCantidad(c)}
-                  >
-                    +
-                  </button>
-
-                  <button
-                    className="btn-delete-cart"
-                    title="Borrar"
-                    onClick={() => eliminarDelCarrito(c.id)}
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
+                    <button
+                      className="btn-delete-cart"
+                      title="Borrar"
+                      onClick={() => eliminarDelCarrito(c.id)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <span>${(c.cantidad * c.precio).toFixed(2)}</span>
@@ -504,12 +720,16 @@ export function PuntoVenta() {
                     >
                       <FaTrash />
                     </button>
+                    <button
+                      type="button"
+                      title="Agregar metodo de pago"
+                      className="add-payment-btn"
+                      onClick={agregarMetodoPago}
+                    >
+                      +
+                    </button>
                   </div>
                 ))}
-
-                <button className="add-payment-btn" onClick={agregarMetodoPago}>
-                  + Agregar método de pago
-                </button>
 
                 <div className="payment-summary">
                   <div>
@@ -532,7 +752,7 @@ export function PuntoVenta() {
                   )}
                 </div>
               </div>
-
+                  
               <div className="form-group">
                 <label>Cliente</label>
 
@@ -540,6 +760,7 @@ export function PuntoVenta() {
                   value={clienteId}
                   onChange={(e) => setClienteId(e.target.value)}
                   className="form-select"
+                  disabled={clienteId}
                 >
                   <option value="">Selecciona una cliente</option>
 

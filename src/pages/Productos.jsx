@@ -14,10 +14,11 @@ export function Productos() {
   const [descripcion, setDescripcion] = useState("");
   const [categoriaId, setCategoriaId] = useState("");
   const [marcaId, setMarcaId] = useState("");
+  const [compatibilidadUniversal, setUniversal] = useState(false);
   const [proveedorId, setProveedorId] = useState("");
   const [precioCompra, setPrecioCompra] = useState("");
   const [precioVenta, setPrecioVenta] = useState("");
-  const [stock, setStock] = useState("");
+  const [stockActual, setStockActual] = useState("");
   const [stockMinimo, setStockMinimo] = useState("");
   const [unidadMedida, setUnidadMedida] = useState("");
   const [editandoId, setEditandoId] = useState(null);
@@ -138,10 +139,11 @@ export function Productos() {
       !descripcion ||
       !categoriaId ||
       !marcaId ||
+      !compatibilidadUniversal ||
       !proveedorId ||
       !precioCompra ||
       !precioVenta ||
-      !stock ||
+      !stockActual ||
       !stockMinimo ||
       !unidadMedida
     ) {
@@ -158,10 +160,11 @@ export function Productos() {
         descripcion,
         categoriaId,
         marcaId,
+        compatibilidadUniversal,
         proveedorId,
         precioCompra,
         precioVenta,
-        stock,
+        stockActual,
         stockMinimo,
         unidadMedida,
         activo: true,
@@ -214,10 +217,11 @@ export function Productos() {
           descripcion: producto.descripcion,
           categoriaId: producto.categoriaId,
           marcaId: producto.marcaId,
+          compatibilidadUniversal: producto.compatibilidadUniversal,
           proveedorId: producto.proveedorId,
           precioCompra: producto.precioCompra,
           precioVenta: producto.precioVenta,
-          stock: producto.stock,
+          stockActual: producto.stockActual,
           stockMinimo: producto.stockMinimo,
           unidadMedida: producto.unidadMedida,
           activo: true,
@@ -241,10 +245,11 @@ export function Productos() {
     setDescripcion(producto.descripcion);
     setCategoriaId(producto.categoriaId);
     setMarcaId(producto.marcaId);
+    setUniversal(producto.compatibilidadUniversal);
     setProveedorId(producto.proveedorId);
     setPrecioCompra(producto.precioCompra);
     setPrecioVenta(producto.precioVenta);
-    setStock(producto.stock);
+    setStockActual(producto.stockActual);
     setStockMinimo(producto.stockMinimo);
     setUnidadMedida(producto.unidadMedida);
     setEditandoId(producto.id);
@@ -257,10 +262,11 @@ export function Productos() {
     setDescripcion("");
     setCategoriaId("");
     setMarcaId("");
+    setUniversal("");
     setProveedorId("");
     setPrecioCompra("");
     setPrecioVenta("");
-    setStock("");
+    setStockActual("");
     setStockMinimo("");
     setUnidadMedida("");
   };
@@ -275,7 +281,7 @@ export function Productos() {
     /*{ key: "proveedorNombre", label: "Proveedor" },*/
     { key: "precioCompra", label: "Precio Compra" },
     { key: "precioVenta", label: "Precio Venta" },
-    { key: "stock", label: "Stock" },
+    { key: "stockActual", label: "Stock" },
     /*{ key: "stockMinimo", label: "Stock Minimo" },*/
     /*{ key: "unidadMedida", label: "Unidad" },*/
   ];
@@ -417,9 +423,12 @@ export function Productos() {
                         </option>
                       ))}
                     </select>
+
+                      
+
                   </div>
 
-                  <div className="form-group form-full">
+                  <div className="form-group">
                     <label>Proveedor</label>
                     <select
                       value={proveedorId}
@@ -433,6 +442,24 @@ export function Productos() {
                           {proveedor.nombre}
                         </option>
                       ))}
+                    </select>
+
+                    <label>Universal</label>
+                    <select
+                      value={compatibilidadUniversal}
+                      onChange={(e) => setUniversal(e.target.value)}
+                      className="form-select"
+                    >
+                      <option value="">Selecciona una opcion</option>
+
+                      
+                        <option key="true" value="true">
+                          SI
+                        </option>
+                        <option key="false" value="false">
+                          NO
+                        </option>
+                      
                     </select>
                   </div>
                 </div>
@@ -467,8 +494,8 @@ export function Productos() {
                     <input
                       type="number"
                       placeholder="5"
-                      value={stock}
-                      onChange={(e) => setStock(e.target.value)}
+                      value={stockActual}
+                      onChange={(e) => setStockActual(e.target.value)}
                     />
                   </div>
 

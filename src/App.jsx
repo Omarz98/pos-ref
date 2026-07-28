@@ -14,6 +14,8 @@ import { MotoVersiones} from "./pages/MotoVersiones"
 import { Clientes } from "./pages/Clientes"
 import { Servicios } from "./pages/Servicios";
 import { Ventas } from "./pages/Ventas";
+import { Ordenes } from "./pages/Ordenes"
+import Configuracion from "./pages/configuracion/Configuracion";
 
 function App() {
   
@@ -39,11 +41,11 @@ function App() {
       </button>
       <aside  className={`sidebar ${menuOpen ? "open" : ""}`}>
         <h2> POSREF</h2>
-
         <nav>
           
           <NavLink to="/pos" onClick={closeMenu} className="menu-link">Punto de venta</NavLink>
           <NavLink to="/ventas" onClick={closeMenu} className="menu-link">Ventas</NavLink>
+          <NavLink to="/ordenes" onClick={closeMenu} className="menu-link">Ordenes</NavLink>
           <NavLink to="/categorias" onClick={closeMenu} className="menu-link">Categorias</NavLink>
           <NavLink to="/proveedores" onClick={closeMenu} className="menu-link">Proveedores</NavLink>
           <NavLink to="/marcas" onClick={closeMenu} className="menu-link">Marcas</NavLink>
@@ -77,6 +79,7 @@ function App() {
           <Route path="/" element={<Home/>} />
           <Route path="/pos" element={<PuntoVenta/>} />
           <Route path="/ventas" element={<Ventas />} />
+          <Route path="/ordenes" element={<Ordenes />} />
           <Route path="/categorias" element={<Categorias/>} />
           <Route path="/proveedores" element={<Proveedores/>} />
           <Route path="/marcas" element={<Marcas/>} />
@@ -112,10 +115,5 @@ function Taller() {
 function Reportes() {
   return <h2>Reportes</h2>;
 }
-
-function Configuracion() {
-  return <h2>Configuración</h2>;
-}
-
 
 export default App;
