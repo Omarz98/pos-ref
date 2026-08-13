@@ -4,15 +4,25 @@ import {
   FaStore,
   FaCashRegister,
 } from "react-icons/fa";
+import { useAuth } from "../auth/AuthContext";
 
 
 export function Footer() {
   const fecha = new Date().toLocaleDateString("es-MX");
 
   // Posteriormente estos datos pueden venir del login
-  const usuario = "Administrador";
+  /*const usuario = "Administrador";
+  const sucursal = "Derians";
+  const caja = "Caja 1";*/
   const sucursal = "Derians";
   const caja = "Caja 1";
+
+  const {
+    usuario,
+    tieneRol,
+    tienePermiso,
+    cerrarSesion,
+  } = useAuth();
 
   return (
     <footer className="footer">
@@ -24,7 +34,7 @@ export function Footer() {
 
       <div className="footer-item">
         <FaUser />
-        <span>{usuario}</span>
+        <span>{usuario?.nombre}</span>
       </div>
 
       <div className="footer-item">
@@ -43,6 +53,10 @@ export function Footer() {
 
       <div className="footer-date">
         {fecha}
+      </div>
+
+      <div>
+        <button className="btn-delete" onClick={cerrarSesion}>Salir</button>
       </div>
 
     </footer>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FormCard from "../components/FormCard";
 import DataTable from "../components/DataTable";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import api from "../services/api";
 
 export function Productos() {
   const [productos, setProductos] = useState([]);
@@ -24,6 +25,7 @@ export function Productos() {
   const [editandoId, setEditandoId] = useState(null);
   const [busqueda, setBusqueda] = useState("");
   const [timestamp, setTimestamp] = useState(Date.now());
+  const [error, setError] = useState("");
 
   //Se pretende crear el backen para unidades
   const unidades = [
@@ -35,10 +37,7 @@ export function Productos() {
   const [isActivoAgregar, setIsActivoAgregar] = useState(false);
 
   useEffect(() => {
-    fetchProductos();
-    fetchCategorias();
-    fetchMarcas();
-    fetchProveedores();
+    cargarProductos();
   }, []);
 
   const categoriasMap = Object.fromEntries(
@@ -67,69 +66,45 @@ export function Productos() {
         producto.descripcion.toLowerCase().includes(busqueda.toLowerCase())),
   );
 
-  const fetchProductos = async () => {
+ async function cargarProductos() {
+    setError("");
     try {
-      const response = await fetch("http://localhost:8080/api/productos");
-      const data = await response.json();
-      setProductos(data);
+      const [productosResponse, categoriasResponse,marcasResponse, proveedoresResponse] = await Promise.all([
+        api.get("/productos"),
+        api.get("/categorias"),
+        api.get("/marcas"),
+        api.get("/proveedores"),
+      ]);
+      
+      const productosData = productosResponse.data ?? [];
+      const categoriasData = categoriasResponse.data ?? [];
+      const marcasData = marcasResponse.data ?? [];
+      const proveedoresData = proveedoresResponse.data ?? [];
+
+      setProductos(productosData);
+      setCategorias(categoriasData);
+      setMarcas(marcasData);
+      setProveedores(productosData);
+
     } catch (error) {
-      console.error("Error al obtener prosuctos", error);
-    }
-  };
+      console.error("Error al obtener productos", error);
+      console.error("Código HTTP:", exception.response?.status);
 
-  const fetchCategorias = async () => {
-    try {
-      const response = await fetch("http://localhost:8080/api/categorias");
+      console.error("Respuesta backend:", exception.response?.data);
 
-      if (!response.ok) {
-        throw new Error("Error al obtener categorías");
+      const mensajeBackend = exception.response?.data?.message;
+
+      if (exception.response?.status === 401) {
+        setError("La sesión expiró. Inicia sesión nuevamente.");
+      } else if (exception.response?.status === 403) {
+        setError("No tienes permisos para consultar uno de los productos.");
+      } else {
+        setError(mensajeBackend || "No fue posible cargar los productos");
       }
-
-      const data = await response.json();
-
-      const categoriasActivas = data.filter((cat) => cat.activo === true);
-
-      setCategorias(categoriasActivas);
-    } catch (error) {
-      console.error("Error al obtener categorías:", error);
     }
   };
 
-  const fetchMarcas = async () => {
-    try {
-      const response = await fetch("http://localhost:8080/api/marcas");
-
-      if (!response.ok) {
-        throw new Error("Error al obtener marcas");
-      }
-
-      const data = await response.json();
-
-      const marcasActivas = data.filter((mar) => mar.activo === true);
-
-      setMarcas(marcasActivas);
-    } catch (error) {
-      console.error("Error al obtener marcas:", error);
-    }
-  };
-
-  const fetchProveedores = async () => {
-    try {
-      const response = await fetch("http://localhost:8080/api/proveedores");
-
-      if (!response.ok) {
-        throw new Error("Error al obtener proveedores");
-      }
-
-      const data = await response.json();
-
-      const proveedoresActivos = data.filter((pro) => pro.activo === true);
-
-      setProveedores(proveedoresActivos);
-    } catch (error) {
-      console.error("Error al obtener proveedores:", error);
-    }
-  };
+  
 
   const crearProducto = async () => {
     if (
@@ -139,7 +114,6 @@ export function Productos() {
       !descripcion ||
       !categoriaId ||
       !marcaId ||
-      !compatibilidadUniversal ||
       !proveedorId ||
       !precioCompra ||
       !precioVenta ||
@@ -150,8 +124,7 @@ export function Productos() {
       alert("Completa todos los campos");
       return;
     }
-    
-    
+
     try {
       const productos = {
         codigo,
@@ -168,36 +141,21 @@ export function Productos() {
         stockMinimo,
         unidadMedida,
         activo: true,
-        
       };
-      
-      console.log(JSON.stringify(productos))
-      
+
+      /*console.log(JSON.stringify(productos));*/
+
       if (editandoId) {
-        await fetch(`http://localhost:8080/api/productos/${editandoId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(productos),
-        });
+      
+        const response = await api.put(`/productos/${editandoId}`,productos);
 
         setEditandoId(null);
       } else {
-        await fetch("http://localhost:8080/api/productos", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(productos),
-        });
+        const response = await api.post("/productos",productos);
       }
 
       limpiarFormulario();
-      fetchProductos();
-      fetchCategorias();
-      fetchMarcas();
-      fetchProveedores();
+      cargarProductos();
     } catch (error) {
       console.error("Error al guardar producto", error);
     }
@@ -224,7 +182,7 @@ export function Productos() {
           stockActual: producto.stockActual,
           stockMinimo: producto.stockMinimo,
           unidadMedida: producto.unidadMedida,
-          activo: true,
+          activo: false,
         }),
       });
 
@@ -423,9 +381,6 @@ export function Productos() {
                         </option>
                       ))}
                     </select>
-
-                      
-
                   </div>
 
                   <div className="form-group">
@@ -452,14 +407,12 @@ export function Productos() {
                     >
                       <option value="">Selecciona una opcion</option>
 
-                      
-                        <option key="true" value="true">
-                          SI
-                        </option>
-                        <option key="false" value="false">
-                          NO
-                        </option>
-                      
+                      <option key="true" value="true">
+                        SI
+                      </option>
+                      <option key="false" value="false">
+                        NO
+                      </option>
                     </select>
                   </div>
                 </div>

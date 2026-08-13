@@ -1,0 +1,263 @@
+/*
+ * AGREGA este contenido al final de PuntoVenta.css
+ */
+
+.ticket-dialog {
+  width: min(100%, 520px);
+  max-height: calc(100vh - 30px);
+  overflow-y: auto;
+  background: var(--pos-surface);
+  border: 1px solid var(--pos-border);
+  border-radius: 20px;
+  box-shadow: 0 25px 80px rgba(15, 23, 42, 0.28);
+  padding: 20px;
+}
+
+.ticket-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ticket-dialog-header h2 {
+  margin: 2px 0 0;
+}
+
+.ticket-paper {
+  width: min(100%, 360px);
+  margin: 0 auto;
+  background: #ffffff;
+  color: #111111;
+  border: 1px dashed #cbd5e1;
+  border-radius: 4px;
+  padding: 18px 16px;
+  font-family:
+    "Courier New",
+    Courier,
+    monospace;
+  font-size: 12px;
+}
+
+.ticket-business {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+}
+
+.ticket-logo {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.ticket-business h1 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.ticket-business strong {
+  font-size: 11px;
+}
+
+.ticket-business span {
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.ticket-separator {
+  border-top: 1px dashed #555;
+  margin: 12px 0;
+}
+
+.ticket-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+
+.ticket-meta > div {
+  display: grid;
+  gap: 2px;
+}
+
+.ticket-meta span {
+  font-size: 10px;
+  color: #555;
+}
+
+.ticket-meta strong {
+  font-size: 11px;
+  word-break: break-word;
+}
+
+.ticket-meta-full {
+  grid-column: 1 / -1;
+}
+
+.ticket-items {
+  display: grid;
+  gap: 11px;
+}
+
+.ticket-item {
+  display: grid;
+  gap: 3px;
+}
+
+.ticket-item-name {
+  display: grid;
+}
+
+.ticket-item-name small {
+  color: #555;
+}
+
+.ticket-item-detail {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ticket-totals,
+.ticket-payments {
+  display: grid;
+  gap: 6px;
+}
+
+.ticket-totals > div,
+.ticket-payments > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ticket-total-main {
+  font-size: 15px;
+  padding-top: 5px;
+}
+
+.ticket-section-title {
+  margin-bottom: 4px;
+}
+
+.ticket-payment-summary {
+  border-top: 1px dotted #777;
+  padding-top: 5px;
+  margin-top: 3px;
+}
+
+.ticket-change {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.ticket-pending {
+  font-weight: 800;
+}
+
+.ticket-footer {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding-bottom: 4px;
+}
+
+.ticket-footer span {
+  font-size: 10px;
+}
+
+.ticket-footer small {
+  margin-top: 6px;
+}
+
+.ticket-actions {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+@media (max-width: 520px) {
+  .ticket-actions {
+    flex-direction: column;
+  }
+
+  .ticket-actions .pos-btn {
+    width: 100%;
+  }
+
+  .ticket-dialog {
+    padding: 14px;
+  }
+}
+
+/*
+ * IMPRESIÓN PARA TICKET TÉRMICO DE 80 mm.
+ *
+ * La pantalla completa desaparece y solamente
+ * se imprime .ticket-print-area.
+ */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 3mm;
+  }
+
+  html,
+  body {
+    width: 80mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .ticket-print-area,
+  .ticket-print-area * {
+    visibility: visible !important;
+  }
+
+  .ticket-print-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+
+    width: 74mm !important;
+    max-width: 74mm !important;
+
+    margin: 0 !important;
+    padding: 2mm !important;
+
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+
+    background: white !important;
+    color: black !important;
+
+    font-size: 10px !important;
+  }
+
+  .ticket-business h1 {
+    font-size: 16px !important;
+  }
+
+  .ticket-logo {
+    font-size: 22px !important;
+  }
+
+  .ticket-total-main,
+  .ticket-change {
+    font-size: 13px !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

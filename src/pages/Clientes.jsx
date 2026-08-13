@@ -2,6 +2,7 @@ import { useEffect, useState, FaMotorcycle } from "react";
 import FormCard from "../components/FormCard";
 import DataTable from "../components/DataTable";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import api from "../services/api";
 
 export function Clientes() {
   const [clientes, setClientes] = useState([]);
@@ -31,10 +32,11 @@ export function Clientes() {
   const [numeroSerie, setNumeroSerie] = useState("");
   const [kilometraje, setKilometraje] = useState("");
 
+  const [error, setError] = useState("");
+  const [mensaje, setMensaje] = useState("");
+
   useEffect(() => {
     fetchClientes();
-    fetchMotoVersiones();
-    fetchMotoModelos();
   }, []);
 
   const clientesFiltrados = clientes.filter(
@@ -45,43 +47,35 @@ export function Clientes() {
 
   const fetchClientes = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/clientes");
-      const data = await response.json();
-      setClientes(data);
+      const [clientesResponse, motoversionesResponse, motomodelosResponse] =
+        await Promise.all([
+          api.get("/clientes"),
+          api.get("/motoversiones"),
+          api.get("/motomodelos"),
+        ]);
+
+      const clientesData = clientesResponse.data ?? [];
+      const motoversionesData = motoversionesResponse.data ?? [];
+      const motomodelosData = motomodelosResponse.data ?? [];
+
+      setClientes(clientesData);
+      setMotoVersiones(motoversionesData);
+      setMotoModelos(motomodelosData);
     } catch (error) {
       console.error("Error al obtener cliente", error);
-    }
-  };
+      console.error("Código HTTP:", exception.response?.status);
 
-  const fetchMotoVersiones = async () => {
-    try {
-      const response = await fetch(`http://localhost:8080/api/motoversiones`);
+      console.error("Respuesta backend:", exception.response?.data);
 
-      if (!response.ok) {
-        throw new Error("No se pudieron obtener las versiones");
+      const mensajeBackend = exception.response?.data?.message;
+
+      if (exception.response?.status === 401) {
+        setError("La sesión expiró. Inicia sesión nuevamente.");
+      } else if (exception.response?.status === 403) {
+        setError("No tienes permisos para consultar clientes.");
+      } else {
+        setError(mensajeBackend || "No fue posible cargar los clientes");
       }
-
-      const data = await response.json();
-
-      setMotoVersiones(data);
-    } catch (error) {
-      console.error("Error al obtener versiones", error);
-    }
-  };
-
-  const fetchMotoModelos = async () => {
-    try {
-      const response = await fetch(`http://localhost:8080/api/motomodelos`);
-
-      if (!response.ok) {
-        throw new Error("No se pudieron obtener los modelos");
-      }
-
-      const data = await response.json();
-
-      setMotoModelos(data);
-    } catch (error) {
-      console.error("Error al obtener versiones", error);
     }
   };
 
@@ -103,6 +97,8 @@ export function Clientes() {
   };
 
   const crearCliente = async () => {
+    setMensaje("");
+    setError("");
     if (!nombre || !telefono || !email || !direccion) {
       alert("Completa todos los campos");
       return;
@@ -119,29 +115,34 @@ export function Clientes() {
       };
 
       if (editandoId) {
-        await fetch(`http://localhost:8080/api/clientes/${editandoId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(cliente),
-        });
+        const response = await api.put(`clientes/${editandoId}`, cliente);
 
+        const clienteGuardado = response.data;
+
+        setMensaje(
+          `Cliente ${clienteGuardado.nombre} editado correctamente`,
+        );
         setEditandoId(null);
       } else {
-        await fetch("http://localhost:8080/api/clientes", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(cliente),
-        });
+        const response = await api.post("/clientes", cliente);
+         const clienteGuardado = response.data;
+
+        setMensaje(
+          `Cliente ${clienteGuardado.nombre} agregado correctamente`,
+        );
       }
 
       limpiarFormulario();
       fetchClientes();
     } catch (error) {
       console.error("Error al guardar cliente", error);
+      const mensajeError = "No fue posible registrar el cliente";
+      setError(
+      typeof mensajeError === "string"
+        ? mensajeError
+        : JSON.stringify(mensajeError)
+    );
+
     }
   };
 
@@ -159,8 +160,8 @@ export function Clientes() {
     }
 
     const versionSeleccionada = motoVersiones.find(
-  (v) => v.id === Number(versionId)
-);
+      (v) => v.id === Number(versionId),
+    );
 
     const moto = {
       clienteId: clienteSeleccionado.id,
@@ -175,25 +176,8 @@ export function Clientes() {
     };
     console.log(JSON.stringify(moto, null, 2));
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/clientes/${clienteSeleccionado.id}/motos`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(moto),
-        },
-      );
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => null);
-
-        throw new Error(
-          error?.mensaje || "No se pudo registrar la motocicleta",
-        );
-      }
-
+      const response = await api.post(`http://localhost:8080/api/clientes/${clienteSeleccionado.id}/motos`, moto);
+      
       alert("Motocicleta registrada correctamente");
 
       limpiarFormularioMoto();
@@ -206,27 +190,42 @@ export function Clientes() {
   };
 
   const eliminarCliente = async (cliente) => {
-    try {
-      await fetch(`http://localhost:8080/api/clientes/${cliente.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nombre: cliente.nombre,
-          telefono: cliente.telefono,
-          email: cliente.email,
-          direccion: cliente.direccion,
-          rfc: cliente.rfc,
-          activo: false,
-        }),
-      });
 
-      fetchClientes();
-    } catch (error) {
-      console.error("Error al eliminar cliente", error);
-    }
-  };
+  const confirmar = window.confirm(
+    `¿Estás seguro de que deseas eliminar al cliente "${cliente.nombre}"?`
+  );
+
+  if (!confirmar) {
+    return;
+  }
+
+  try {
+    const clienteAEliminar = {
+      nombre: cliente.nombre,
+      telefono: cliente.telefono,
+      email: cliente.email,
+      direccion: cliente.direccion,
+      rfc: cliente.rfc,
+      activo: false,
+    };
+
+    const response = await api.put(
+      `/clientes/${cliente.id}`,
+      clienteAEliminar
+    );
+
+    const clienteEliminado = response.data;
+
+    alert(`Cliente "${clienteEliminado.nombre}" eliminado correctamente`);
+
+    fetchClientes();
+
+  } catch (error) {
+    console.error("Error al eliminar cliente", error);
+
+    alert("Ocurrió un error al eliminar el cliente");
+  }
+};
 
   const editarCliente = (cliente) => {
     setNombre(cliente.nombre);
@@ -296,6 +295,20 @@ export function Clientes() {
           </button>
         </div>
       </header>
+
+      {error && (
+        <div className="alert alert-error">
+          <span>⚠️</span>
+          <span>{error}</span>
+        </div>
+      )}
+
+      {mensaje && (
+        <div className="alert alert-success">
+          <span>✅</span>
+          <span>{mensaje}</span>
+        </div>
+      )}
 
       <section className="content">
         <DataTable
@@ -427,10 +440,8 @@ export function Clientes() {
                         .map((version) => (
                           <option key={version.id} value={version.id}>
                             {`${version.version} (${version.anio})`}
-                           
                           </option>
                         ))}
-
                     </select>
                   </div>
 

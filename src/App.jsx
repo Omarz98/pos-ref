@@ -1,107 +1,205 @@
 import "./App.css";
-import { NavLink, Route, Routes } from "react-router-dom";
+import {
+  NavLink,
+  Route,
+  Routes,
+  BrowserRouter,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider } from "./auth/AuthContext";
+import { useAuth } from "./auth/AuthContext";
+import ProtectedRoute from "./auth/ProtectedRoute";
+import PermissionRoute from "./auth/PermissionRoute";
 import { useState } from "react";
-import { PuntoVenta } from "./pages/PuntoVenta";
+/*import { PuntoVenta } from "./pages/PuntoVenta";*/
+import { PuntoVenta } from "./pages/PuntoVenta/PuntoVenta";
 import { Home } from "./pages/Home";
 import { Proveedores } from "./pages/Proveedores";
 import { Marcas } from "./pages/Marcas";
 import { Productos } from "./pages/Productos";
-import { Footer } from "./components/Footer"
-import Categorias from "./pages/Categorias";  
+import { Footer } from "./components/Footer";
+import Categorias from "./pages/Categorias";
 import { MotoMarcas } from "./pages/MotoMarcas";
 import { MotoModelos } from "./pages/MotoModelos";
-import { MotoVersiones} from "./pages/MotoVersiones"
-import { Clientes } from "./pages/Clientes"
+import { MotoVersiones } from "./pages/MotoVersiones";
+import { Clientes } from "./pages/Clientes";
 import { Servicios } from "./pages/Servicios";
 import { Ventas } from "./pages/Ventas";
-import { Ordenes } from "./pages/Ordenes"
+import { Ordenes } from "./pages/Ordenes";
 import Configuracion from "./pages/configuracion/Configuracion";
+import Login from "./pages/Login";
+import SinPermiso from "./pages/SinPermiso";
+import Sidebar from "./pages/Sidebar";
+import { MainLayout } from "./pages/MainLayout";
+import { Usuarios } from "./pages/Usuarios";
+import { Caja } from "./pages/Caja";
 
 function App() {
-  
-
   const [theme, setTheme] = useState("light");
-  
-  const [menuOpen, setMenuOpen] = useState(false);
-
   const cambiarTema = () => {
     setTheme(theme === "light" ? "dark" : "light");
   };
 
-  const closeMenu = () => setMenuOpen(false);
-
+  const { autenticado } = useAuth();
 
   return (
-    <div className="app" data-theme={theme}>
-      <button
-        className="hamburger-btn"
-        onClick={() => setMenuOpen(!menuOpen)}
-      >
-        ☰
-      </button>
-      <aside  className={`sidebar ${menuOpen ? "open" : ""}`}>
-        <h2> POSREF</h2>
-        <nav>
-          
-          <NavLink to="/pos" onClick={closeMenu} className="menu-link">Punto de venta</NavLink>
-          <NavLink to="/ventas" onClick={closeMenu} className="menu-link">Ventas</NavLink>
-          <NavLink to="/ordenes" onClick={closeMenu} className="menu-link">Ordenes</NavLink>
-          <NavLink to="/categorias" onClick={closeMenu} className="menu-link">Categorias</NavLink>
-          <NavLink to="/proveedores" onClick={closeMenu} className="menu-link">Proveedores</NavLink>
-          <NavLink to="/marcas" onClick={closeMenu} className="menu-link">Marcas</NavLink>
-          <NavLink to="/productos" onClick={closeMenu} className="menu-link">Productos</NavLink>
-          <NavLink to="/motomarcas" onClick={closeMenu} className="menu-link">Moto Marcas</NavLink>
-          <NavLink to="/motomodelos" onClick={closeMenu} className="menu-link">Moto Modelos</NavLink>
-          <NavLink to="/motoversion" onClick={closeMenu} className="menu-link">Moto Versiones</NavLink>
-          <NavLink to="/clientes" onClick={closeMenu} className="menu-link">Clientes</NavLink>
-          <NavLink to="/servicios" onClick={closeMenu} className="menu-link">Servicios</NavLink>
-          <NavLink to="/inventario" onClick={closeMenu} className="menu-link">Inventario</NavLink>
-          <NavLink to="/taller" onClick={closeMenu} className="menu-link">Taller</NavLink>
-          <NavLink to="/reportes" onClick={closeMenu} className="menu-link">Reportes</NavLink>
-          <NavLink to="/configuracion" onClick={closeMenu} className="menu-link">Configuración</NavLink>
-          <button className="theme-btn" onClick={cambiarTema}>
-              {theme === "light" ? "Modo oscuro" : "Modo claro"}
-            </button>
-        </nav>
-      </aside>
-      {menuOpen && (
-        <div
-          className="overlay"
-          onClick={() => setMenuOpen(false)}
-        />
-      )}
-      <main className="main">
-        
-        
-        
+    <div data-theme={theme}>
+      <Routes>
+        {/* Rutas públicas */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/sin-permiso" element={<SinPermiso />} />
 
-        <Routes>
-          <Route path="/" element={<Home/>} />
-          <Route path="/pos" element={<PuntoVenta/>} />
-          <Route path="/ventas" element={<Ventas />} />
-          <Route path="/ordenes" element={<Ordenes />} />
-          <Route path="/categorias" element={<Categorias/>} />
-          <Route path="/proveedores" element={<Proveedores/>} />
-          <Route path="/marcas" element={<Marcas/>} />
-          <Route path="/productos" element={<Productos />} />
-          <Route path="/motomarcas" element={<MotoMarcas />} />
-          <Route path="/motomodelos" element={<MotoModelos />} />
-          <Route path="/motoversion" element={<MotoVersiones />} />
-          <Route path="/clientes" element={<Clientes />} />
-          <Route path="/servicios" element={<Servicios />} />
-          <Route path="/inventario" element={<Inventario />} />
-          <Route path="/taller" element={<Taller />} />
-          <Route path="/reportes" element={<Reportes />} />
-          <Route path="/configuracion" element={<Configuracion />} />
-        </Routes>
+        {/* Rutas protegidas */}
+        <Route element={<ProtectedRoute />}>
+          <Route
+            element={<MainLayout theme={theme} cambiarTema={cambiarTema} />}
+          >
+            <Route index element={<Navigate to="/pos" replace />} />
 
-        <Footer />
-      </main>
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="VENTA_CREAR"
+                  roles={["ADMINISTRADOR"]}
+                />
+              }
+            >
+              <Route path="pos" element={<PuntoVenta />} />
+            </Route>
+
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="VENTA_VER"
+                  roles={["ADMINISTRADOR"]}
+                />
+              }
+            >
+              <Route path="ventas" element={<Ventas />} />
+            </Route>
+
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="PRODUCTO_VER"
+                  roles={["ADMINISTRADOR"]}
+                />
+              }
+            >
+              <Route path="productos" element={<Productos />} />
+            </Route>
+
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="TALLER_VER"
+                  roles={["ADMINISTRADOR"]}
+                />
+              }
+            >
+              <Route path="ordenes" element={<Ordenes />} />
+            </Route>
+
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="USUARIO_VER"
+                  roles={["ADMINISTRADOR"]}
+                />
+              }
+            >
+              <Route path="/usuarios" element={<Usuarios />} />
+            </Route>
+            
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="CAJA_VER"
+                  roles={["ADMINISTRADOR", "CAJERO"]}
+                />
+              }
+            >
+              <Route path="/caja" element={<Caja />} />
+            </Route>
+
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="CATEGORIA_VER"
+                  roles={["ADMINISTRADOR"]}
+                />
+              }
+            >
+              <Route path="/categorias" element={<Categorias />} />
+            </Route>
+
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="PROVEEDOR_VER"
+                  roles={["ADMINISTRADOR"]}
+                />
+              }
+            >
+              <Route path="/proveedores" element={<Proveedores />} />
+            </Route>
+
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="MARCA_VER"
+                  roles={["ADMINISTRADOR"]}
+                />
+              }
+            >
+              <Route path="/marcas" element={<Marcas />} />
+            </Route>
+
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="CLIENTE_VER"
+                  roles={["ADMINISTRADOR"]}
+                />
+              }
+            >
+              <Route path="/clientes" element={<Clientes />} />
+            </Route>
+
+
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="CONFIGURACION_VER"
+                  roles={["ADMINISTRADOR"]}
+                />
+              }
+            >
+              <Route path="/configuracion" element={<Configuracion />} />
+            </Route>
+
+            
+            <Route
+              element={
+                <PermissionRoute
+                  roles={["ADMINISTRADOR"]}
+                />
+              }
+            >
+              <Route path="/home" element={<Home />} />
+            </Route>
+
+
+          </Route>
+
+        </Route>
+
+        {/* Ruta desconocida */}
+        <Route path="*" element={<Navigate to="/pos" replace />} />
+      </Routes>
     </div>
   );
 }
-
-
 
 function Inventario() {
   return <h2>Inventario</h2>;
@@ -111,9 +209,12 @@ function Taller() {
   return <h2>Taller</h2>;
 }
 
-
 function Reportes() {
   return <h2>Reportes</h2>;
+}
+
+function Layout() {
+  return <h2>Layout</h2>;
 }
 
 export default App;

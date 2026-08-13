@@ -18,11 +18,27 @@ export function Marcas() {
       marca.activo &&
       marca.nombre.toLowerCase().includes(busqueda.toLowerCase()),
   );
-
+  const token = localStorage.getItem("token");
   const fetchMarcas = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/marcas");
-      const data = await response.json();
+      const response = await fetch("http://localhost:8080/api/marcas", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const textoRespuesta = await response.text();
+
+      if (!response.ok) {
+        console.error("Código HTTP:", response.status);
+        console.error("Respuesta backend:", textoRespuesta);
+
+        throw new Error(`Error ${response.status}: ${textoRespuesta}`);
+      }
+
+      const data = textoRespuesta ? JSON.parse(textoRespuesta) : [];
       setMarcas(data);
     } catch (error) {
       console.error("Error al obtener Marcas", error);

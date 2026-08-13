@@ -22,11 +22,27 @@ function Categorias() {
       categoria.descripcion.toLowerCase().includes(busqueda.toLowerCase())
     )
   );
-
+   const token = localStorage.getItem("token");
   const fetchCategorias = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/categorias");
-      const data = await response.json();
+      const response = await fetch("http://localhost:8080/api/categorias", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const textoRespuesta = await response.text();
+
+      if (!response.ok) {
+        console.error("Código HTTP:", response.status);
+        console.error("Respuesta backend:", textoRespuesta);
+
+        throw new Error(`Error ${response.status}: ${textoRespuesta}`);
+      }
+
+      const data = textoRespuesta ? JSON.parse(textoRespuesta) : [];
       setCategorias(data);
     } catch (error) {
       console.error("Error al obtener categorías", error);

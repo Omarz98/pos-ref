@@ -4,10 +4,18 @@
 
 .sidebar {
   width: 240px;
-  background: var(--bg);
+  background: var(--surface);
   padding: 24px;
   flex-shrink: 0;
   color: var(--text);
+  border-radius: 30px;
+  padding: 10px;
+  margin: 10px;
+  box-shadow: 0 -2px 8px rgba(0,0,0,.05);
+}
+
+.sidebar.collapsed {
+  width: 72px;
 }
 
 .sidebar h2 {
@@ -44,4 +52,58 @@
 
 .hamburger-btn {
   display: none;
+}
+
+.menu-link{
+    display:flex;
+    align-items:center;
+    gap:14px;
+
+    padding:12px;
+    border-radius:10px;
+
+    color:var(--text);
+    transition:.2s;
+}
+
+.menu-icon{
+    font-size:22px;
+    min-width:22px;
+}
+
+.sidebar.collapsed .menu-link{
+    justify-content:center;
+    padding:14px;
+}
+
+.sidebar.collapsed .menu-link span{
+    display:none;
+}
+
+.sidebar.collapsed .theme-btn{
+    display:none;
+}
+
+.derians{
+  color: var(--primary);
+    font-weight: 700;
+    text-transform: uppercase;
+    
+}
+
+.sidebar-brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.logo{
+    width:40px;
+    height:40px;
+    object-fit:contain;
+}
+
+.sidebar-brand h2{
+    margin:0;
+    font-size:1.2rem;
 }

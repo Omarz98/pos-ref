@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import FormCard from "../components/FormCard";
 import DataTable from "../components/DataTable";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaTrash, FaCartPlus } from "react-icons/fa";
 import { MdAddShoppingCart } from "react-icons/md";
+import { Outlet } from "react-router-dom";
+import { Caja } from "./Caja";
+import api from "../services/api";
 export function PuntoVenta() {
   const [productos, setProductos] = useState([]);
   const [carrito, setCarrito] = useState([]);
@@ -14,11 +17,13 @@ export function PuntoVenta() {
   const [ordenes, setOrdenes] = useState([]);
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
 
+  const [cajaAbierta, setCajaAbierta] = useState(null);
+  const [consultandoCaja, setConsultandoCaja] = useState(true);
+  const [error, setError] = useState("");
+
   useEffect(() => {
-    fetchProductos();
-    fetchClientes();
-    fetchServicios();
-    fetchOrdenesPendientes();
+    cargarCatalogos();
+    consultarCaja();
   }, []);
 
   const [pagos, setPagos] = useState([
@@ -47,51 +52,59 @@ export function PuntoVenta() {
     setPagos(pagos.filter((_, i) => i !== index));
   };
 
-  const fetchProductos = async () => {
-    try {
-      const response = await fetch("http://localhost:8080/api/productos");
-      const data = await response.json();
-      setProductos(data);
-    } catch (error) {
-      console.error("Error al obtener prosuctos", error);
-    }
-  };
-  const fetchClientes = async () => {
-    try {
-      const response = await fetch("http://localhost:8080/api/clientes");
-      const data = await response.json();
-      setClientes(data);
-    } catch (error) {
-      console.error("Error al obtener clientes", error);
-    }
-  };
+  async function cargarCatalogos() {
+    setError("");
 
-  const fetchServicios = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/servicios");
-      const data = await response.json();
-      setServicios(data);
-    } catch (error) {
-      console.error("Error al obtener clientes", error);
-    }
-  };
+      const [
+        clientesResponse,
+        serviciosResponse,
+        productosResponse,
+        ordenesPendientesResponse,
+      ] = await Promise.all([
+        api.get("/clientes"),
+        api.get("/servicios"),
+        api.get("/productos"),
+        api.get("/ordenes-taller/pendientes"),
+      ]);
 
-  const fetchOrdenesPendientes = async () => {
-    try {
-      const response = await fetch(
-        "http://localhost:8080/api/ordenes-taller/pendientes",
+      const clientesData = clientesResponse.data ?? [];
+
+      const serviciosData = serviciosResponse.data ?? [];
+
+      const productosData = productosResponse.data ?? [];
+
+      const ordenesPendientesData = ordenesPendientesResponse.data ?? [];
+
+      setClientes(clientesData.filter((cliente) => cliente.activo !== false));
+
+      setServicios(
+        serviciosData.filter((servicio) => servicio.activo !== false),
       );
 
-      if (!response.ok) {
-        throw new Error("No fue posible obtener las órdenes pendientes");
-      }
+      setProductos(
+        productosData.filter((producto) => producto.activo !== false),
+      );
 
-      const data = await response.json();
-      setOrdenes(data);
-    } catch (error) {
-      console.error("Error al obtener órdenes de servicio:", error);
+      setOrdenes(ordenesPendientesData);
+    } catch (exception) {
+      console.error("Error al cargar catálogos:", exception);
+
+      console.error("Código HTTP:", exception.response?.status);
+
+      console.error("Respuesta backend:", exception.response?.data);
+
+      const mensajeBackend = exception.response?.data?.message;
+
+      if (exception.response?.status === 401) {
+        setError("La sesión expiró. Inicia sesión nuevamente.");
+      } else if (exception.response?.status === 403) {
+        setError("No tienes permisos para consultar uno de los catálogos.");
+      } else {
+        setError(mensajeBackend || "No fue posible cargar los catálogos");
+      }
     }
-  };
+  }
 
   /*const serviciosMap = Object.fromEntries(
     servicios.map((s) => [s.id, s.nombre]),
@@ -162,6 +175,7 @@ export function PuntoVenta() {
     }
 
     const nombre = String(elemento.nombre || "").toLowerCase();
+    const descripcion = String(elemento.descripcion || "").toLowerCase();
     const codigo = String(elemento.codigo || "").toLowerCase();
     const numeroOrden = String(elemento.numeroOrden || "").toLowerCase();
     const clienteNombre = String(elemento.clienteNombre || "").toLowerCase();
@@ -200,7 +214,8 @@ export function PuntoVenta() {
       setCarrito([
         ...carrito,
         {
-          id: producto.id,
+          id: producto.codigo,
+          productoId: producto.id,
           tipo: producto.tipo,
           nombre: producto.nombre,
           cantidad: 1,
@@ -387,99 +402,129 @@ export function PuntoVenta() {
     saldoPendiente < 0 && efectivoPagado > 0 ? Math.abs(saldoPendiente) : 0;
 
   const cobrarVenta = async () => {
-    if (carrito.length === 0) {
-      alert("Agrega productos o servicios a la venta");
-      return;
-    }
+  if (!cajaAbierta) {
+    alert("Debes abrir la caja antes de registrar ventas");
+    return;
+  }
 
-    /*const venta = {
-      items: carrito,
+  if (carrito.length === 0) {
+    alert("Agrega productos o servicios a la venta");
+    return;
+  }
 
-      subtotal,
-      iva,
-      total,
-      clienteId,
-      pagos,
+  const venta = {
+    ordenServicioId: ordenSeleccionada?.id || null,
 
-      totalPagado,
+    clienteId: clienteId ? Number(clienteId) : null,
 
-      saldoPendiente,
+    items: carrito.map((item) => ({
+      productoId: item.productoId
+        ? Number(item.productoId)
+        : null,
 
-      estado: saldoPendiente <= 0 ? "PAGADA" : "PENDIENTE",
-    };*/
-    const venta = {
-      ordenServicioId: ordenSeleccionada?.id || null,
+      servicioId: item.servicioId
+        ? Number(item.servicioId)
+        : null,
 
-      clienteId: clienteId ? Number(clienteId) : null,
+      detalleOrdenId: item.detalleOrdenId
+        ? Number(item.detalleOrdenId)
+        : null,
 
-      items: carrito.map((item) => ({
-        productoId: item.productoId || null,
-        servicioId: item.servicioId || null,
-        detalleOrdenId: item.detalleOrdenId || null,
-        codigo: item.codigo || item.id,
-        tipo: item.tipo,
-        nombre: item.nombre,
-        cantidad: Number(item.cantidad),
-        precio: Number(item.precio),
-      })),
+      codigo: item.codigo || item.id,
+      tipo: item.tipo,
+      nombre: item.nombre,
+      cantidad: Number(item.cantidad),
+      precio: Number(item.precio),
+    })),
 
-      subtotal: Number(subtotal.toFixed(2)),
-      iva: Number(iva.toFixed(2)),
-      total: Number(total.toFixed(2)),
+    subtotal: Number(subtotal.toFixed(2)),
+    iva: Number(iva.toFixed(2)),
+    total: Number(total.toFixed(2)),
 
-      pagos: pagos.map((pago) => ({
-        metodo: pago.metodo,
-        monto: Number(pago.monto || 0),
-      })),
+    pagos: pagos.map((pago) => ({
+      metodo: pago.metodo,
+      monto: Number(pago.monto || 0),
+    })),
 
-      totalPagado: Number(totalPagado.toFixed(2)),
+    totalPagado: Number(totalPagado.toFixed(2)),
 
-      saldoPendiente: Number(Math.max(saldoPendiente, 0).toFixed(2)),
+    saldoPendiente: Number(
+      Math.max(saldoPendiente, 0).toFixed(2)
+    ),
 
-      estado: saldoPendiente <= 0 ? "PAGADA" : "PENDIENTE",
-    };
+    estado:
+      saldoPendiente <= 0
+        ? "PAGADA"
+        : "PENDIENTE",
+  };
 
-    /*console.log(JSON.stringify(venta, null, 2));*/
-    console.log(venta);
+  console.log("Venta enviada:", venta);
+
+  try {
+    const response = await api.post("/ventas", venta);
+
+    const ventaGuardada = response.data;
+
+    console.log("Venta registrada:", ventaGuardada);
+
+    alert(
+      ordenSeleccionada
+        ? `Orden ${ordenSeleccionada.folio} cobrada correctamente`
+        : `Venta ${
+            ventaGuardada?.id || ""
+          } registrada correctamente`
+    );
+
+    setCarrito([]);
+    setOrdenSeleccionada(null);
+    setClienteId("");
+
+    setPagos([
+      {
+        metodo: "EFECTIVO",
+        monto: 0,
+      },
+    ]);
+
+    setShowCobroModal(false);
+    setBusqueda("");
+
+    await Promise.all([
+      cargarCatalogos(),
+    ]);
+  } catch (error) {
+    console.error("Error al registrar venta:", error);
+
+    const respuestaError = error.response?.data;
+
+    const mensaje =
+      respuestaError?.message ||
+      respuestaError?.error ||
+      (typeof respuestaError === "string"
+        ? respuestaError
+        : null) ||
+      error.message ||
+      "Error al registrar venta";
+
+    alert(mensaje);
+  }
+};
+
+  const consultarCaja = async () => {
+    setConsultandoCaja(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/ventas", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(venta),
-      });
+      
+      const response = await api.get("/caja/actual")
 
-      if (!response.ok) {
-        const mensaje = await response.text();
-        throw new Error(mensaje || "Error al registrar venta");
-      }
-
-      alert(
-        ordenSeleccionada
-          ? `Orden ${ordenSeleccionada.folio} cobrada correctamente`
-          : "Venta registrada correctamente",
-      );
-
-      setCarrito([]);
-      setOrdenSeleccionada(null);
-      setClienteId("");
-
-      setPagos([
-        {
-          metodo: "EFECTIVO",
-          monto: 0,
-        },
-      ]);
-
-      setShowCobroModal(false);
-      setBusqueda("");
-
-      await Promise.all([fetchProductos(), fetchOrdenesPendientes()]);
+      const cajaData = response.data ?? null;
+      
+      setCajaAbierta(cajaData);
     } catch (error) {
-      console.error(error);
-      alert("Error al registrar venta");
+      console.error("Error al consultar la caja:", error);
+      setCajaAbierta(null);
+    } finally {
+      setConsultandoCaja(false);
     }
   };
 
@@ -496,6 +541,10 @@ export function PuntoVenta() {
     },
     {
       key: "nombre",
+      label: "Nombre",
+    },
+    {
+      key: "descripcion",
       label: "Descripción",
     },
     {
@@ -524,270 +573,280 @@ export function PuntoVenta() {
   ];*/
   const actions = [
     {
-      icon: <MdAddShoppingCart />,
+      icon: <FaCartPlus />,
       title: "Agregar o cargar",
       className: "btn-action btn-edit",
       onClick: seleccionarElemento,
     },
   ];
-  return (
-    <>
-      <header className="header">
-        <div>
-          <h1>Punto de venta</h1>
-          <p>Refaccionaria y taller de motocicletas</p>
-        </div>
 
-        <div className="header-actions">
-          <button className="primary-btn">Nueva venta</button>
-        </div>
-      </header>
+  if (consultandoCaja) {
+    return <p>Consultando estado de caja...</p>;
+  }
 
-      <section className="content">
-        <section className="content-table-productos">
-          <DataTable
-            title="Buscar refacción, servicio u orden"
-            searchPlaceholder="Buscar por código, nombre o número de orden..."
-            searchValue={busqueda}
-            onSearchChange={setBusqueda}
-            columns={columns}
-            data={elementosFiltrados}
-            actions={actions}
-          />
-        </section>
-
-        <aside className="cart-panel">
-          {ordenSeleccionada && (
-            <div className="selected-order">
-              <div>
-                <span>Orden de servicio</span>
-                <strong>{ordenSeleccionada.folio}</strong>
-              </div>
-
-              <div>
-                <span>Cliente</span>
-                <strong>{ordenSeleccionada.clienteNombre}</strong>
-              </div>
-
-              <button
-                type="button"
-                className="secondary-btn"
-                onClick={() => {
-                  setOrdenSeleccionada(null);
-                  setCarrito([]);
-                  setClienteId("");
-                }}
-              >
-                Quitar orden
-              </button>
-            </div>
-          )}
-          <h2>Venta actual</h2>
-
-          {carrito.map((c) => (
-            <div key={c.id} className="cart-item">
-              <div>
-                <strong>{c.nombre}</strong>
-
-                <p>
-                  {c.cantidad} x ${c.precio.toFixed(2)}
-                </p>
-                {!ordenSeleccionada && (
-                  <div className="cart-actions">
-                    <button
-                      className="btn-minus"
-                      title="Quitar"
-                      onClick={() => disminuirCantidad(c)}
-                    >
-                      -
-                    </button>
-
-                    <span>{c.cantidad}</span>
-
-                    <button
-                      className="btn-plus"
-                      title="Agregar"
-                      onClick={() => aumentarCantidad(c)}
-                    >
-                      +
-                    </button>
-
-                    <button
-                      className="btn-delete-cart"
-                      title="Borrar"
-                      onClick={() => eliminarDelCarrito(c.id)}
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <span>${(c.cantidad * c.precio).toFixed(2)}</span>
-            </div>
-          ))}
-
-          <div className="totals">
-            <div>
-              <span>Subtotal</span>
-              <strong>${subtotal.toFixed(2)}</strong>
-            </div>
-
-            <div>
-              <span>IVA</span>
-              <strong>${iva.toFixed(2)}</strong>
-            </div>
-
-            <div className="total">
-              <span>Total</span>
-              <strong>${total.toFixed(2)}</strong>
-            </div>
+  if (cajaAbierta) {
+    return (
+      <>
+        <header className="header">
+          <div>
+            <h1>Punto de venta</h1>
+            <p>Refaccionaria y taller de motocicletas</p>
           </div>
 
-          <button className="pay-btn" onClick={() => setShowCobroModal(true)}>
-            Cobrar venta
-          </button>
-        </aside>
-        {showCobroModal && (
-          <div
-            className="modal-overlay"
-            onClick={() => setShowCobroModal(false)}
-          >
-            <div className="modal-cobro" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>Cobrar venta</h2>
+          <div className="header-actions">
+            <button className="primary-btn">Nueva venta</button>
+          </div>
+        </header>
 
-                <button
-                  className="close-btn"
-                  onClick={() => setShowCobroModal(false)}
-                >
-                  ✕
-                </button>
-              </div>
+        <section className="content">
+          <section className="content-table-productos">
+            <DataTable
+              title="Buscar refacción, servicio u orden"
+              searchPlaceholder="Buscar por código, nombre o número de orden..."
+              searchValue={busqueda}
+              onSearchChange={setBusqueda}
+              columns={columns}
+              data={elementosFiltrados}
+              actions={actions}
+            />
+          </section>
 
-              <div className="modal-body">
-                <div className="summary">
-                  <div>
-                    <span>Subtotal</span>
-                    <strong>${subtotal.toFixed(2)}</strong>
-                  </div>
-
-                  <div>
-                    <span>IVA</span>
-                    <strong>${iva.toFixed(2)}</strong>
-                  </div>
-
-                  <div className="grand-total">
-                    <span>Total</span>
-                    <strong>${total.toFixed(2)}</strong>
-                  </div>
+          <aside className="cart-panel">
+            {ordenSeleccionada && (
+              <div className="selected-order">
+                <div>
+                  <span>Orden de servicio</span>
+                  <strong>{ordenSeleccionada.folio}</strong>
                 </div>
 
-                <h3>Métodos de pago</h3>
+                <div>
+                  <span>Cliente</span>
+                  <strong>{ordenSeleccionada.clienteNombre}</strong>
+                </div>
 
-                {pagos.map((pago, index) => (
-                  <div key={index} className="payment-row">
-                    <select
-                      value={pago.metodo}
-                      onChange={(e) => {
-                        const nuevos = [...pagos];
-                        nuevos[index].metodo = e.target.value;
-                        setPagos(nuevos);
-                      }}
-                    >
-                      <option value="EFECTIVO">Efectivo</option>
-                      <option value="TARJETA">Tarjeta</option>
-                      <option value="TRANSFERENCIA">Transferencia</option>
-                    </select>
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={() => {
+                    setOrdenSeleccionada(null);
+                    setCarrito([]);
+                    setClienteId("");
+                  }}
+                >
+                  Quitar orden
+                </button>
+              </div>
+            )}
+            <h2>Venta actual</h2>
 
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Monto"
-                      value={pago.monto}
-                      onChange={(e) => {
-                        const nuevos = [...pagos];
-                        nuevos[index].monto = Number(e.target.value);
-                        setPagos(nuevos);
-                      }}
-                    />
+            {carrito.map((c) => (
+              <div key={c.id} className="cart-item">
+                <div>
+                  <strong>{c.nombre}</strong>
 
-                    <button
-                      type="button"
-                      className="remove-payment-btn"
-                      onClick={() => eliminarMetodoPago(index)}
-                      disabled={pagos.length === 1}
-                    >
-                      <FaTrash />
-                    </button>
-                    <button
-                      type="button"
-                      title="Agregar metodo de pago"
-                      className="add-payment-btn"
-                      onClick={agregarMetodoPago}
-                    >
-                      +
-                    </button>
-                  </div>
-                ))}
+                  <p>
+                    {c.cantidad} x ${c.precio.toFixed(2)}
+                  </p>
+                  {!ordenSeleccionada && (
+                    <div className="cart-actions">
+                      <button
+                        className="btn-minus"
+                        title="Quitar"
+                        onClick={() => disminuirCantidad(c)}
+                      >
+                        -
+                      </button>
 
-                <div className="payment-summary">
-                  <div>
-                    <span>Total pagado</span>
-                    <strong>${totalPagado.toFixed(2)}</strong>
-                  </div>
+                      <span>{c.cantidad}</span>
 
-                  {saldoPendiente > 0 ? (
-                    <div className="pending">
-                      <span>Saldo pendiente</span>
+                      <button
+                        className="btn-plus"
+                        title="Agregar"
+                        onClick={() => aumentarCantidad(c)}
+                      >
+                        +
+                      </button>
 
-                      <strong>${saldoPendiente.toFixed(2)}</strong>
-                    </div>
-                  ) : (
-                    <div className="change">
-                      <span>Cambio</span>
-
-                      <strong>${cambio.toFixed(2)}</strong>
+                      <button
+                        className="btn-delete-cart"
+                        title="Borrar"
+                        onClick={() => eliminarDelCarrito(c.id)}
+                      >
+                        <FaTrash />
+                      </button>
                     </div>
                   )}
                 </div>
+
+                <span>${(c.cantidad * c.precio).toFixed(2)}</span>
               </div>
-                  
-              <div className="form-group">
-                <label>Cliente</label>
+            ))}
 
-                <select
-                  value={clienteId}
-                  onChange={(e) => setClienteId(e.target.value)}
-                  className="form-select"
-                  disabled={clienteId}
-                >
-                  <option value="">Selecciona una cliente</option>
-
-                  {clientes.map((cliente) => (
-                    <option key={cliente.id} value={cliente.id}>
-                      {cliente.nombre}
-                    </option>
-                  ))}
-                </select>
+            <div className="totals">
+              <div>
+                <span>Subtotal</span>
+                <strong>${subtotal.toFixed(2)}</strong>
               </div>
 
-              <div className="modal-footer">
-                <button
-                  className="secondary-btn"
-                  onClick={() => setShowCobroModal(false)}
-                >
-                  Cancelar
-                </button>
+              <div>
+                <span>IVA</span>
+                <strong>${iva.toFixed(2)}</strong>
+              </div>
 
-                <button className="confirm-btn" onClick={cobrarVenta}>
-                  Confirmar cobro
-                </button>
+              <div className="total">
+                <span>Total</span>
+                <strong>${total.toFixed(2)}</strong>
               </div>
             </div>
-          </div>
-        )}
-      </section>
-    </>
-  );
+
+            <button className="pay-btn" onClick={() => setShowCobroModal(true)}>
+              Cobrar venta
+            </button>
+          </aside>
+          {showCobroModal && (
+            <div
+              className="modal-overlay"
+              onClick={() => setShowCobroModal(false)}
+            >
+              <div className="modal-cobro" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-header">
+                  <h2>Cobrar venta</h2>
+
+                  <button
+                    className="close-btn"
+                    onClick={() => setShowCobroModal(false)}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="modal-body">
+                  <div className="summary">
+                    <div>
+                      <span>Subtotal</span>
+                      <strong>${subtotal.toFixed(2)}</strong>
+                    </div>
+
+                    <div>
+                      <span>IVA</span>
+                      <strong>${iva.toFixed(2)}</strong>
+                    </div>
+
+                    <div className="grand-total">
+                      <span>Total</span>
+                      <strong>${total.toFixed(2)}</strong>
+                    </div>
+                  </div>
+
+                  <h3>Métodos de pago</h3>
+
+                  {pagos.map((pago, index) => (
+                    <div key={index} className="payment-row">
+                      <select
+                        value={pago.metodo}
+                        onChange={(e) => {
+                          const nuevos = [...pagos];
+                          nuevos[index].metodo = e.target.value;
+                          setPagos(nuevos);
+                        }}
+                      >
+                        <option value="EFECTIVO">Efectivo</option>
+                        <option value="TARJETA">Tarjeta</option>
+                        <option value="TRANSFERENCIA">Transferencia</option>
+                      </select>
+
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Monto"
+                        value={pago.monto}
+                        onChange={(e) => {
+                          const nuevos = [...pagos];
+                          nuevos[index].monto = Number(e.target.value);
+                          setPagos(nuevos);
+                        }}
+                      />
+
+                      <button
+                        type="button"
+                        className="remove-payment-btn"
+                        onClick={() => eliminarMetodoPago(index)}
+                        disabled={pagos.length === 1}
+                      >
+                        <FaTrash />
+                      </button>
+                      <button
+                        type="button"
+                        title="Agregar metodo de pago"
+                        className="add-payment-btn"
+                        onClick={agregarMetodoPago}
+                      >
+                        +
+                      </button>
+                    </div>
+                  ))}
+
+                  <div className="payment-summary">
+                    <div>
+                      <span>Total pagado</span>
+                      <strong>${totalPagado.toFixed(2)}</strong>
+                    </div>
+
+                    {saldoPendiente > 0 ? (
+                      <div className="pending">
+                        <span>Saldo pendiente</span>
+
+                        <strong>${saldoPendiente.toFixed(2)}</strong>
+                      </div>
+                    ) : (
+                      <div className="change">
+                        <span>Cambio</span>
+
+                        <strong>${cambio.toFixed(2)}</strong>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Cliente</label>
+
+                  <select
+                    value={clienteId}
+                    onChange={(e) => setClienteId(e.target.value)}
+                    className="form-select"
+                    disabled={clienteId}
+                  >
+                    <option value="">Selecciona una cliente</option>
+
+                    {clientes.map((cliente) => (
+                      <option key={cliente.id} value={cliente.id}>
+                        {cliente.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="modal-footer">
+                  <button
+                    className="secondary-btn"
+                    onClick={() => setShowCobroModal(false)}
+                  >
+                    Cancelar
+                  </button>
+
+                  <button className="confirm-btn" onClick={cobrarVenta}>
+                    Confirmar cobro
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+        <Outlet />
+      </>
+    );
+  } else {
+    return <Caja />;
+  }
 }

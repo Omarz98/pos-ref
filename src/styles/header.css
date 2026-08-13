@@ -25,3 +25,18 @@
   gap: 10px;
   flex-wrap: wrap;
 }
+
+.sidebar-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.collapse-btn{
+    border:none;
+    background:none;
+    cursor:pointer;
+    color:var(--text);
+    font-size:22px;
+}

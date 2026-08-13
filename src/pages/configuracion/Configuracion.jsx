@@ -9,7 +9,7 @@ import { Clientes } from "../../index";
 
 
 const configuracionInicial = {
-  nombreNegocio: "MotoPOS",
+  nombreNegocio: "Derians Motors",
   razonSocial: "",
   rfc: "",
   telefono: "",
@@ -186,7 +186,7 @@ const Configuracion = () => {
         <div>
           <h1>Configuración</h1>
           <p>
-            Administra las preferencias generales de MotoPOS.
+            Administra las preferencias generales de POS-DERIANS.
           </p>
         </div>
 

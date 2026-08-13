@@ -31,6 +31,9 @@
     z-index: 1000;
     padding-top: 70px;
     transition: left 0.3s ease;
+    border-radius: 0px;
+    padding: 0px;
+    margin: 0px;
   }
 
   .sidebar.open {
@@ -44,7 +47,7 @@
 
   .sidebar a {
     width: 100%;
-    color: var(--sidebar-text);
+    color: var(--text);
   }
 
   .sidebar a.active {
