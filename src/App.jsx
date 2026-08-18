@@ -33,6 +33,12 @@ import Sidebar from "./pages/Sidebar";
 import { MainLayout } from "./pages/MainLayout";
 import { Usuarios } from "./pages/Usuarios";
 import { Caja } from "./pages/Caja";
+import {TallerDashboard } from "./pages/taller/TallerDashboard";
+import { OrdenesTaller } from "./pages/taller/OrdenesTaller";
+import { NuevaOrdenTaller } from "./pages/taller/NuevaOrdenTaller";
+import {DetalleOrdenTaller } from "./pages/taller/DetalleOrdenTaller";
+import {AgendaTaller } from "./pages/taller/AgendaTaller";
+import {Taller} from "./pages/taller/Taller";
 
 function App() {
   const [theme, setTheme] = useState("light");
@@ -110,7 +116,7 @@ function App() {
             >
               <Route path="/usuarios" element={<Usuarios />} />
             </Route>
-            
+
             <Route
               element={
                 <PermissionRoute
@@ -166,7 +172,6 @@ function App() {
               <Route path="/clientes" element={<Clientes />} />
             </Route>
 
-
             <Route
               element={
                 <PermissionRoute
@@ -178,20 +183,32 @@ function App() {
               <Route path="/configuracion" element={<Configuracion />} />
             </Route>
 
-            
+            <Route element={<PermissionRoute roles={["ADMINISTRADOR"]} />}>
+              <Route path="/home" element={<Home />} />
+            </Route>
+
             <Route
               element={
                 <PermissionRoute
+                  permiso="TALLER_VER"
                   roles={["ADMINISTRADOR"]}
                 />
               }
             >
-              <Route path="/home" element={<Home />} />
+              <Route path="/taller" element={<Taller />}>
+                <Route index element={<TallerDashboard />} />
+
+                <Route path="ordenes" element={<OrdenesTaller />} />
+
+                <Route path="ordenes/nueva" element={<NuevaOrdenTaller />} />
+
+                <Route path="ordenes/:id" element={<DetalleOrdenTaller />} />
+
+                <Route path="agenda" element={<AgendaTaller />} />
+              </Route>
             </Route>
 
-
           </Route>
-
         </Route>
 
         {/* Ruta desconocida */}
@@ -205,9 +222,6 @@ function Inventario() {
   return <h2>Inventario</h2>;
 }
 
-function Taller() {
-  return <h2>Taller</h2>;
-}
 
 function Reportes() {
   return <h2>Reportes</h2>;
