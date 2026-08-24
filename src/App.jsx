@@ -33,12 +33,12 @@ import Sidebar from "./pages/Sidebar";
 import { MainLayout } from "./pages/MainLayout";
 import { Usuarios } from "./pages/Usuarios";
 import { Caja } from "./pages/Caja";
-import {TallerDashboard } from "./pages/taller/TallerDashboard";
+import { TallerDashboard } from "./pages/taller/TallerDashboard";
 import { OrdenesTaller } from "./pages/taller/OrdenesTaller";
 import { NuevaOrdenTaller } from "./pages/taller/NuevaOrdenTaller";
-import {DetalleOrdenTaller } from "./pages/taller/DetalleOrdenTaller";
-import {AgendaTaller } from "./pages/taller/AgendaTaller";
-import {Taller} from "./pages/taller/Taller";
+import { DetalleOrdenTaller } from "./pages/taller/DetalleOrdenTaller";
+import { AgendaTaller } from "./pages/taller/AgendaTaller";
+import { Taller } from "./pages/taller/Taller";
 
 function App() {
   const [theme, setTheme] = useState("light");
@@ -66,7 +66,7 @@ function App() {
               element={
                 <PermissionRoute
                   permiso="VENTA_CREAR"
-                  roles={["ADMINISTRADOR"]}
+                  roles={["ADMINISTRADOR", "ENCARGADO", "CAJERO"]}
                 />
               }
             >
@@ -77,7 +77,7 @@ function App() {
               element={
                 <PermissionRoute
                   permiso="VENTA_VER"
-                  roles={["ADMINISTRADOR"]}
+                  roles={["ADMINISTRADOR", "ENCARGADO", "CAJERO"]}
                 />
               }
             >
@@ -88,7 +88,7 @@ function App() {
               element={
                 <PermissionRoute
                   permiso="PRODUCTO_VER"
-                  roles={["ADMINISTRADOR"]}
+                  roles={["ADMINISTRADOR", "ENCARGADO", "CAJERO"]}
                 />
               }
             >
@@ -99,7 +99,7 @@ function App() {
               element={
                 <PermissionRoute
                   permiso="TALLER_VER"
-                  roles={["ADMINISTRADOR"]}
+                  roles={["ADMINISTRADOR", "ENCARGADO"]}
                 />
               }
             >
@@ -121,7 +121,7 @@ function App() {
               element={
                 <PermissionRoute
                   permiso="CAJA_VER"
-                  roles={["ADMINISTRADOR", "CAJERO"]}
+                  roles={["ADMINISTRADOR", "ENCARGADO", "CAJERO"]}
                 />
               }
             >
@@ -165,7 +165,7 @@ function App() {
               element={
                 <PermissionRoute
                   permiso="CLIENTE_VER"
-                  roles={["ADMINISTRADOR"]}
+                  roles={["ADMINISTRADOR", "ENCARGADO"]}
                 />
               }
             >
@@ -183,7 +183,11 @@ function App() {
               <Route path="/configuracion" element={<Configuracion />} />
             </Route>
 
-            <Route element={<PermissionRoute roles={["ADMINISTRADOR"]} />}>
+            <Route
+              element={
+                <PermissionRoute roles={["ADMINISTRADOR", "ENCARGADO"]} />
+              }
+            >
               <Route path="/home" element={<Home />} />
             </Route>
 
@@ -191,23 +195,48 @@ function App() {
               element={
                 <PermissionRoute
                   permiso="TALLER_VER"
-                  roles={["ADMINISTRADOR"]}
+                  roles={["ADMINISTRADOR", "ENCARGADO", "MECANICO"]}
                 />
               }
             >
-              <Route path="/taller" element={<Taller />}>
+              <Route path="taller" element={<Taller />}>
                 <Route index element={<TallerDashboard />} />
 
-                <Route path="ordenes" element={<OrdenesTaller />} />
+                <Route
+                  element={
+                    <PermissionRoute
+                      permiso="TALLER_ORDEN_VER"
+                      roles={["ADMINISTRADOR", "ENCARGADO", "MECANICO"]}
+                    />
+                  }
+                >
+                  <Route path="ordenes" element={<OrdenesTaller />} />
+                  <Route path="ordenes/:id" element={<DetalleOrdenTaller />} />
+                </Route>
 
-                <Route path="ordenes/nueva" element={<NuevaOrdenTaller />} />
+                <Route
+                  element={
+                    <PermissionRoute
+                      permiso="TALLER_ORDEN_CREAR"
+                      roles={["ADMINISTRADOR", "ENCARGADO"]}
+                    />
+                  }
+                >
+                  <Route path="ordenes/nueva" element={<NuevaOrdenTaller />} />
+                </Route>
 
-                <Route path="ordenes/:id" element={<DetalleOrdenTaller />} />
-
-                <Route path="agenda" element={<AgendaTaller />} />
+                <Route
+                  element={
+                    <PermissionRoute
+                      permiso="TALLER_AGENDA_VER"
+                      roles={["ADMINISTRADOR", "ENCARGADO", "MECANICO"]}
+                    />
+                  }
+                >
+                  <Route path="agenda" element={<AgendaTaller />} />
+                </Route>
               </Route>
             </Route>
-
           </Route>
         </Route>
 
@@ -221,7 +250,6 @@ function App() {
 function Inventario() {
   return <h2>Inventario</h2>;
 }
-
 
 function Reportes() {
   return <h2>Reportes</h2>;

@@ -23,7 +23,7 @@ export function AgendaTaller() {
         <h3>{dia}</h3>
         {items.map(o=><button key={o.id} className={`agenda-item ${o.atrasada?"agenda-atrasada":""}`} onClick={()=>navigate(`/taller/ordenes/${o.id}`)}>
           <span>{new Date(o.fechaEntregaEstimada).toLocaleTimeString("es-MX",{hour:"2-digit",minute:"2-digit"})}</span>
-          <div><strong>{o.folio} · {o.clienteNombre}</strong><small>{o.motocicleta} · {o.tecnicoNombre||"Sin asignar"}</small></div>
+          <div><strong>{o.folio} · {o.clienteNombre}</strong><small>{o.motocicleta} · {o.tecnicoNombre||"Sin tecnico asignado"}</small></div>
           <EstadoBadge estado={o.estado}/>
         </button>)}
       </section>)}

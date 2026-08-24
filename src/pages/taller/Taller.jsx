@@ -22,7 +22,7 @@ export function Taller() {
 
       <nav className="taller-tabs">
         <NavLink to="/taller" end><BsSpeedometer2 /> Dashboard</NavLink>
-        <NavLink to="/taller/ordenes"><BsClipboardCheck /> Órdenes</NavLink>
+        <NavLink to="/ordenes"><BsClipboardCheck /> Órdenes</NavLink>
         <NavLink to="/taller/agenda"><BsCalendar3 /> Agenda</NavLink>
       </nav>
 

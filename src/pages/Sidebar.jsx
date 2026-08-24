@@ -83,6 +83,10 @@ export default function Sidebar({ theme, cambiarTema }) {
             <MdNoteAlt className="menu-icon" />
             {!collapsed && <span>Ordenes</span>}
           </NavLink>
+          <NavLink to="/taller" title="Taller" className="menu-link">
+            <GiFullMotorcycleHelmet className="menu-icon" />
+            {!collapsed && <span>Taller</span>}
+          </NavLink>
           <NavLink to="/usuarios" className="menu-link" title="Usuarios">
             <FaUsers className="menu-icon" />
             {!collapsed && <span>Usuarios</span>}
@@ -132,10 +136,7 @@ export default function Sidebar({ theme, cambiarTema }) {
             <MdOutlineInventory className="menu-icon" />
             {!collapsed && <span>Inventario</span>}
           </NavLink>
-          <NavLink to="/taller" title="Taller" className="menu-link">
-            <GiFullMotorcycleHelmet className="menu-icon" />
-            {!collapsed && <span>Taller</span>}
-          </NavLink>
+          
           <NavLink to="/reportes" title="Reportes" className="menu-link">
             <TbReportAnalyticsFilled className="menu-icon" />
             {!collapsed && <span>Reportes</span>}
