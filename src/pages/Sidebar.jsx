@@ -3,7 +3,7 @@ import { useAuth } from "../auth/AuthContext";
 import { useState } from "react";
 import { FaFileInvoiceDollar, FaCashRegister, FaTags } from "react-icons/fa6";
 import { MdNoteAlt, MdOutlineInventory } from "react-icons/md";
-import { FaUsers, FaPeopleCarry } from "react-icons/fa";
+import { FaUsers, FaPeopleCarry, FaBoxes } from "react-icons/fa";
 import {
   MdOutlineFormatListNumbered,
   MdDarkMode,
@@ -14,7 +14,6 @@ import { GiFullMotorcycleHelmet } from "react-icons/gi";
 import { TbReportAnalyticsFilled } from "react-icons/tb";
 import { GrDocumentConfig } from "react-icons/gr";
 import { PiMotorcycleFill } from "react-icons/pi";
-
 
 import {
   BsShop,
@@ -59,8 +58,6 @@ export default function Sidebar({ theme, cambiarTema }) {
             <PiMotorcycleFill className="menu-icon" />
             {!collapsed && <h2>POS-DERIANS</h2>}
           </NavLink>
-
-          
         </div>
         <div className="sidebar-header">
           <button
@@ -87,6 +84,22 @@ export default function Sidebar({ theme, cambiarTema }) {
             <GiFullMotorcycleHelmet className="menu-icon" />
             {!collapsed && <span>Taller</span>}
           </NavLink>
+
+          {(tieneRol("ADMINISTRADOR") ||
+            tieneRol("ENCARGADO") ||
+            tienePermiso("INVENTARIO_VER")) && (
+            <NavLink to="/inventario" onClick={closeMenu} className="menu-link">
+              <FaBoxes />
+
+              {!collapsed && <span>Inventario</span>}
+            </NavLink>
+          )}
+          {/*<NavLink to="/inventario" onClick={closeMenu} className="menu-link">
+            <FaBoxes />
+
+            {!collapsed && <span>Inventario</span>}
+          </NavLink>
+            */}
           <NavLink to="/usuarios" className="menu-link" title="Usuarios">
             <FaUsers className="menu-icon" />
             {!collapsed && <span>Usuarios</span>}
@@ -132,11 +145,6 @@ export default function Sidebar({ theme, cambiarTema }) {
             Servicios
           </NavLink>
           */}
-          <NavLink to="/inventario" title="Inventario" className="menu-link">
-            <MdOutlineInventory className="menu-icon" />
-            {!collapsed && <span>Inventario</span>}
-          </NavLink>
-          
           <NavLink to="/reportes" title="Reportes" className="menu-link">
             <TbReportAnalyticsFilled className="menu-icon" />
             {!collapsed && <span>Reportes</span>}

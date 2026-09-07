@@ -39,6 +39,7 @@ import { NuevaOrdenTaller } from "./pages/taller/NuevaOrdenTaller";
 import { DetalleOrdenTaller } from "./pages/taller/DetalleOrdenTaller";
 import { AgendaTaller } from "./pages/taller/AgendaTaller";
 import { Taller } from "./pages/taller/Taller";
+import Inventario from "./pages/inventario/Inventario";
 
 function App() {
   const [theme, setTheme] = useState("light");
@@ -191,6 +192,17 @@ function App() {
               <Route path="/home" element={<Home />} />
             </Route>
 
+             <Route
+                  element={
+                    <PermissionRoute
+                      permiso="INVENTARIO_VER"
+                      roles={["ADMINISTRADOR", "ENCARGADO"]}
+                    />
+                  }
+                >
+                  <Route path="/inventario" element={<Inventario />} />
+                </Route>
+
             <Route
               element={
                 <PermissionRoute
@@ -225,6 +237,8 @@ function App() {
                   <Route path="ordenes/nueva" element={<NuevaOrdenTaller />} />
                 </Route>
 
+               
+
                 <Route
                   element={
                     <PermissionRoute
@@ -245,10 +259,6 @@ function App() {
       </Routes>
     </div>
   );
-}
-
-function Inventario() {
-  return <h2>Inventario</h2>;
 }
 
 function Reportes() {
