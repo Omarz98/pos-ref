@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-
-const API_URL = "http://localhost:8080/api";
+import api from "../services/api.js";
 
 const valorInicialMovimiento = {
   tipo: "ENTRADA",
@@ -42,22 +41,13 @@ export function Caja() {
     setCargando(true);
 
     try {
-      const response = await fetch(`${API_URL}/caja/actual`, {
-        headers: obtenerHeaders(),
-      });
+      const response = await api.get("/caja/actual",);
 
       if (response.status === 404 || response.status === 400) {
         setCaja(null);
         return;
       }
-
-      if (!response.ok) {
-        const texto = await response.text();
-        throw new Error(texto || "No fue posible consultar la caja");
-      }
-
-      const data = await response.json();
-      setCaja(data);
+      setCaja(response.data ?? []);
     } catch (error) {
       console.error(error);
 
@@ -91,25 +81,16 @@ export function Caja() {
     setMensaje("");
 
     try {
-      const response = await fetch(`${API_URL}/caja/abrir`, {
-        method: "POST",
-        headers: obtenerHeaders(),
-        body: JSON.stringify({
-          nombreCaja: apertura.nombreCaja,
-          montoInicial: Number(apertura.montoInicial),
-          observaciones: apertura.observaciones,
-        }),
-      });
 
-      const texto = await response.text();
+      const payload = {
+        nombreCaja: apertura.nombreCaja,
+        montoInicial: Number(apertura.montoInicial),
+        observaciones: apertura.observaciones,
+      };
 
-      if (!response.ok) {
-        throw new Error(texto || "No fue posible abrir la caja");
-      }
+      const response = await api.post("/caja/abrir",payload)
 
-      const data = texto ? JSON.parse(texto) : null;
-
-      setCaja(data);
+      setCaja(response.data);
       setMensaje("Caja abierta correctamente");
     } catch (error) {
       console.error(error);
@@ -138,30 +119,10 @@ export function Caja() {
     setProcesando(true);
 
     try {
-      const response = await fetch(
-        `${API_URL}/caja/movimientos`,
-        {
-          method: "POST",
-          headers: obtenerHeaders(),
-          body: JSON.stringify({
-            tipo: movimiento.tipo,
-            monto: Number(movimiento.monto),
-            concepto: movimiento.concepto.trim(),
-          }),
-        }
-      );
 
-      const texto = await response.text();
+      const response = await api.get("/caja/movimientos");
 
-      if (!response.ok) {
-        throw new Error(
-          texto || "No fue posible registrar el movimiento"
-        );
-      }
-
-      const data = texto ? JSON.parse(texto) : null;
-
-      setCaja(data);
+      setCaja(response.data);
       setMovimiento(valorInicialMovimiento);
       setMensaje("Movimiento registrado");
     } catch (error) {
@@ -194,24 +155,15 @@ export function Caja() {
     setProcesando(true);
 
     try {
-      const response = await fetch(`${API_URL}/caja/cerrar`, {
-        method: "POST",
-        headers: obtenerHeaders(),
-        body: JSON.stringify({
-          efectivoContado: Number(cierre.efectivoContado),
-          observaciones: cierre.observaciones,
-        }),
-      });
 
-      const texto = await response.text();
-
-      if (!response.ok) {
-        throw new Error(texto || "No fue posible cerrar la caja");
+      const payload = {
+        efectivoContado: Number(cierre.efectivoContado),
+        observaciones: cierre.observaciones,        
       }
 
-      const data = texto ? JSON.parse(texto) : null;
+      const response = await api.post("/caja/cerrar", payload);
 
-      setCaja(data);
+      setCaja(response.data );
       setMensaje("Caja cerrada correctamente");
     } catch (error) {
       console.error(error);
