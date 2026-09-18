@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import api from "../../services/api.js";
 
 import {
   ResponsiveContainer,
@@ -29,8 +30,6 @@ import {
 } from "react-icons/bs";
 
 import "../styles/Home/Home.css";
-
-const API_URL = "http://localhost:8080/api";
 
 export function Home() {
 
@@ -78,31 +77,10 @@ export function Home() {
   async function cargarDashboard() {
 
     try {
-
       setCargando(true);
-     const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${API_URL}/dashboard`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.get("/dashboard");
 
-      const textoRespuesta = await response.text();
-
-      if (!response.ok) {
-        console.error("Código HTTP:", response.status);
-        console.error("Respuesta backend:", textoRespuesta);
-
-        throw new Error(`Error ${response.status}: ${textoRespuesta}`);
-      }
-
-      const data =
-        textoRespuesta ? JSON.parse(textoRespuesta) : [];
-
-      setDashboard(data);
+      setDashboard(response.data ?? []);
 
     } catch (error) {
 
