@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FormCard from "../components/FormCard";
 import DataTable from "../components/DataTable";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import api from "../services/api.js";
 
 function Categorias() {
   const [categorias, setCategorias] = useState([]);
@@ -25,25 +26,9 @@ function Categorias() {
    const token = localStorage.getItem("token");
   const fetchCategorias = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/categorias", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.get("/categorias");
 
-      const textoRespuesta = await response.text();
-
-      if (!response.ok) {
-        console.error("Código HTTP:", response.status);
-        console.error("Respuesta backend:", textoRespuesta);
-
-        throw new Error(`Error ${response.status}: ${textoRespuesta}`);
-      }
-
-      const data = textoRespuesta ? JSON.parse(textoRespuesta) : [];
-      setCategorias(data);
+      setCategorias(response.data ?? []);
     } catch (error) {
       console.error("Error al obtener categorías", error);
     }
@@ -63,23 +48,12 @@ function Categorias() {
       };
 
       if (editandoId) {
-        await fetch(`http://localhost:8080/api/categorias/${editandoId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(categoria),
-        });
+
+        await api.put(`/categorias/${editandoId}`, categoria);
 
         setEditandoId(null);
       } else {
-        await fetch("http://localhost:8080/api/categorias", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(categoria),
-        });
+        await api.post("/categorias", categoria);
       }
 
       limpiarFormulario();
@@ -90,19 +64,14 @@ function Categorias() {
   };
 
   const eliminarCategoria = async (categoria) => {
-    try {
-      await fetch(`http://localhost:8080/api/categorias/${categoria.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nombre: categoria.nombre,
-          descripcion: categoria.descripcion,
-          activo: false,
-        }),
-      });
 
+    const categoriaEliminada = {
+      nombre: categoria.nombre,
+      descripcion: categoria.descripcion,
+      activo: false,
+    }
+    try {
+      await api.put(`/categorias/${categoria.id}`, categoriaEliminada)
       fetchCategorias();
     } catch (error) {
       console.error("Error al eliminar categoría", error);
