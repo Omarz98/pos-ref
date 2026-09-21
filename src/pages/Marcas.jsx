@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import FormCard from "../components/FormCard";
 import DataTable from "../components/DataTable";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import api from "../../services/api.js";
+import api from "../services/api.js";
 
 export function Marcas() {
   const [marcas, setMarcas] = useState([]);
@@ -19,7 +19,6 @@ export function Marcas() {
       marca.activo &&
       marca.nombre.toLowerCase().includes(busqueda.toLowerCase()),
   );
-  const token = localStorage.getItem("token");
   const fetchMarcas = async () => {
     try {
       const response = await api.get("/marcas");
@@ -46,11 +45,11 @@ export function Marcas() {
         await api.put(`/marcas/${editandoId}`, marca);
         setEditandoId(null);
       } else {
-        await api.post("/marcas");
+        await api.post("/marcas", marca);
       }
 
       limpiarFormulario();
-      fetchMArcas();
+      
     } catch (error) {
       console.error("Error al guardar marca", error);
     }

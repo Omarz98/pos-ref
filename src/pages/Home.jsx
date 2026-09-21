@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
-import api from "../../services/api.js";
+import api from "../services/api.js";
 
 import {
   ResponsiveContainer,
