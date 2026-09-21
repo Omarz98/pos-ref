@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FormCard from "../components/FormCard";
 import DataTable from "../components/DataTable";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import api from "../../services/api.js";
 
 export function Marcas() {
   const [marcas, setMarcas] = useState([]);
@@ -21,25 +22,9 @@ export function Marcas() {
   const token = localStorage.getItem("token");
   const fetchMarcas = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/marcas", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await api.get("/marcas");
 
-      const textoRespuesta = await response.text();
-
-      if (!response.ok) {
-        console.error("Código HTTP:", response.status);
-        console.error("Respuesta backend:", textoRespuesta);
-
-        throw new Error(`Error ${response.status}: ${textoRespuesta}`);
-      }
-
-      const data = textoRespuesta ? JSON.parse(textoRespuesta) : [];
-      setMarcas(data);
+      setMarcas(response.data ?? []);
     } catch (error) {
       console.error("Error al obtener Marcas", error);
     }
@@ -58,23 +43,10 @@ export function Marcas() {
       };
 
       if (editandoId) {
-        await fetch(`http://localhost:8080/api/marcas/${editandoId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(marca),
-        });
-
+        await api.put(`/marcas/${editandoId}`, marca);
         setEditandoId(null);
       } else {
-        await fetch("http://localhost:8080/api/marcas", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(marca),
-        });
+        await api.post("/marcas");
       }
 
       limpiarFormulario();
@@ -85,18 +57,12 @@ export function Marcas() {
   };
 
   const eliminarMarca = async (marca) => {
-    try {
-      await fetch(`http://localhost:8080/api/marcas/${marca.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nombre: marca.nombre,
+    const payloadMarca = {
+        nombre: marca.nombre,
           activo: false,
-        }),
-      });
-
+    }
+    try {
+      await api.put(`/marcas/${marca.id}`,payloadMarca)
       fetchMarcas();
     } catch (error) {
       console.error("Error al eliminar marca", error);
