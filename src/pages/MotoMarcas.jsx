@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FormCard from "../components/FormCard";
 import DataTable from "../components/DataTable";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import api from "../services/api.js";
 export function MotoMarcas(){
      const [motoMarcas, setMotoMarcas] = useState([]);
   const [nombre, setNombre] = useState("");
@@ -22,9 +23,8 @@ export function MotoMarcas(){
 
   const fetchMotoMarcas = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/motomarcas");
-      const data = await response.json();
-      setMotoMarcas(data);
+      const response = await api.get("/motomarcas");
+      setMotoMarcas(response.data);
     } catch (error) {
       console.error("Error al obtener MotoMarcas", error);
     }
@@ -43,23 +43,10 @@ export function MotoMarcas(){
       };
 
       if (editandoId) {
-        await fetch(`http://localhost:8080/api/motomarcas/${editandoId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(motoMarca),
-        });
-
+        await api.put(`/motomarcas/${editandoId}`,motoMarca);
         setEditandoId(null);
       } else {
-        await fetch("http://localhost:8080/api/motomarcas", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(motoMarca),
-        });
+        await api.post("/motomarcas",motoMarca);
       }
 
       limpiarFormulario();
@@ -70,18 +57,12 @@ export function MotoMarcas(){
   };
 
   const eliminarMotoMarca = async (motoMarca) => {
-    try {
-      await fetch(`http://localhost:8080/api/motomarcas/${motoMarca.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nombre: motoMarca.nombre,
+    const motoMarcaDelete = {
+       nombre: motoMarca.nombre,
           activo: false,
-        }),
-      });
-
+    }
+    try {
+      await api.put(`/motomarcas/${motoMarca.id}`,motoMarcaDelete);
       fetchMotoMarcas();
     } catch (error) {
       console.error("Error al eliminar motomarca", error);
