@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FormCard from "../components/FormCard";
 import DataTable from "../components/DataTable";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import api from "../services/api.js";
 export function MotoModelos() {
   const [motoModelos, setMotoModelos] = useState([]);
   const [motoMarcas, setMotoMarcas] = useState([]);
@@ -35,9 +36,9 @@ export function MotoModelos() {
 
   const fetchMotoModelos = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/motomodelos");
-      const data = await response.json();
-      setMotoModelos(data);
+      const response = await api.get("/motomodelos");
+      
+      setMotoModelos(response.data);
     } catch (error) {
       console.error("Error al obtener MotoModelos", error);
     }
@@ -45,9 +46,9 @@ export function MotoModelos() {
 
   const fetchMotoMarcas = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/motomarcas");
-      const data = await response.json();
-      setMotoMarcas(data);
+      const response = await api.get("/motomarcas");
+      
+      setMotoMarcas(response.data);
     } catch (error) {
       console.error("Error al obtener motomarcas", error);
     }
@@ -67,23 +68,12 @@ export function MotoModelos() {
         activo: true,
       };
       if (editandoId) {
-        await fetch(`http://localhost:8080/api/motomodelos/${editandoId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(motoModelo),
-        });
+        await api.put(`/motomodelos/${editandoId}`, motoModelo);
+        
 
         setEditandoId(null);
       } else {
-        await fetch("http://localhost:8080/api/motomodelos", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(motoModelo),
-        });
+        await api.post("/motomodelos");
       }
 
       limpiarFormulario();
@@ -94,19 +84,14 @@ export function MotoModelos() {
   };
 
   const eliminarMotoModelos = async (motoModelo) => {
-    try {
-      await fetch(`http://localhost:8080/api/motomodelos/${motoModelo.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nombre: motoModelo.nombre,
+
+    const motoModeloDelete = {
+       nombre: motoModelo.nombre,
           motoMarcaId: motoModelo.motoMarcaId,
           activo: false,
-        }),
-      });
-
+    }
+    try {
+      await api.put(`/motomodelos/${motoModelo.id}`,motoModeloDelete);
       fetchMotoModelos();
       fetchMotoMarcas();
     } catch (error) {
