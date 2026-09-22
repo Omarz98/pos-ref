@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FormCard from "../components/FormCard";
 import DataTable from "../components/DataTable";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import api from "../services/api.js";
 
 export function Proveedores() {
   const [proveedores, setProveedores] = useState([]);
@@ -27,24 +28,9 @@ export function Proveedores() {
   const token = localStorage.getItem("token");
   const fetchProveedores = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/proveedores", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const textoRespuesta = await response.text();
-
-      if (!response.ok) {
-        console.error("Código HTTP:", response.status);
-        console.error("Respuesta backend:", textoRespuesta);
-
-        throw new Error(`Error ${response.status}: ${textoRespuesta}`);
-      }
-
-      const data = textoRespuesta ? JSON.parse(textoRespuesta) : [];
-      setProveedores(data);
+      const response = await api.get("/proveedores");
+      
+      setProveedores(response.data ?? []);
     } catch (error) {
       console.error("Error al obtener Proveedores", error);
     }
@@ -67,23 +53,12 @@ export function Proveedores() {
       };
 
       if (editandoId) {
-        await fetch(`http://localhost:8080/api/proveedores/${editandoId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(proveedor),
-        });
-
+        await api.put(`/proveedores/${editandoId}`,proveedor);
+      
         setEditandoId(null);
       } else {
-        await fetch("http://localhost:8080/api/proveedores", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(proveedor),
-        });
+        await api.post("/proveedores",proveedor);
+
       }
 
       limpiarFormulario();
@@ -94,21 +69,16 @@ export function Proveedores() {
   };
 
   const eliminarProveedor = async (proveedor) => {
-    try {
-      await fetch(`http://localhost:8080/api/proveedores/${proveedor.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-        nombre:proveedor.nombre,
+    const proveedorDelete = {
+      nombre:proveedor.nombre,
         telefono:proveedor.telefono,
         email:proveedor.email,
         direccion:proveedor.direccion,
         contacto:proveedor.contacto,
         activo: false,
-        }),
-      });
+    }
+    try {
+      await api.put(`/proveedores/${proveedor.id}`,proveedorDelete);
 
       fetchProveedores();
     } catch (error) {
