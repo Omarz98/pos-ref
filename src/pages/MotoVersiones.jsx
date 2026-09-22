@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FormCard from "../components/FormCard";
 import DataTable from "../components/DataTable";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import api from "../services/api.js";
 
 export function MotoVersiones() {
   const [motoVersiones, setMotoVersiones] = useState([]);
@@ -40,19 +41,19 @@ export function MotoVersiones() {
 
   const fetchMotoVersiones = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/motoversiones");
-      const data = await response.json();
-      setMotoVersiones(data);
+      const response = await api.get("/motoversiones");
+      
+      setMotoVersiones(response.data);
     } catch (error) {
-      console.error("Error al obtener MotoModelos", error);
+      console.error("Error al obtener motoversiones", error);
     }
   };
 
   const fetchMotoModelos = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/motomodelos");
-      const data = await response.json();
-      setMotoModelos(data);
+      const response = await api.get("/motomodelos");
+      
+      setMotoModelos(response.data);
     } catch (error) {
       console.error("Error al obtener MotoModelos", error);
     }
@@ -60,9 +61,9 @@ export function MotoVersiones() {
 
   const fetchMotoMarcas = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/motomarcas");
-      const data = await response.json();
-      setMotoMarcas(data);
+      const response = await api.get("/motomarcas");
+      
+      setMotoMarcas(response.data);
     } catch (error) {
       console.error("Error al obtener motomarcas", error);
     }
@@ -83,23 +84,11 @@ export function MotoVersiones() {
         activo: true,
       };
       if (editandoId) {
-        await fetch(`http://localhost:8080/api/motoversiones/${editandoId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(motoVersion),
-        });
+        await api.put(`/motoversiones/${editandoId}`,motoVersion);
 
         setEditandoId(null);
       } else {
-        await fetch("http://localhost:8080/api/motoversiones", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(motoVersion),
-        });
+        await api.post("/motoversiones");
       }
 
       limpiarFormulario();
@@ -111,20 +100,16 @@ export function MotoVersiones() {
   };
 
   const eliminarMotoVersion = async (motoVersion) => {
-    try {
-      await fetch(`http://localhost:8080/api/motoversiones/${motoVersion.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          motoModeloId: motoVersion.motoModeloId,
+
+    const motoversionesDelete = {
+      motoModeloId: motoVersion.motoModeloId,
           anio: motoVersion.anio,
           cilindraje: motoVersion.cilindraje,
           version: motoVersion.version,
           activo: false,
-        }),
-      });
+    }
+    try {
+      await api.put(`http://localhost:8080/api/motoversiones/${motoVersion.id}`,motoversionesDelete);
 
       fetchMotoModelos();
       fetchMotoModelos();
