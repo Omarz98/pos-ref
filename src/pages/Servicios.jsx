@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FormCard from "../components/FormCard";
 import DataTable from "../components/DataTable";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import api from "../services/api.js";
 export function Servicios(){
     const [servicios, setServicios] = useState([]);
     const [activo, setActivo] = useState("");
@@ -27,9 +28,9 @@ export function Servicios(){
 
   const fetchServicios = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/servicios");
-      const data = await response.json();
-      setServicios(data);
+      const response = await api.get("/servicios");
+      
+      setServicios(response.data);
     } catch (error) {
       console.error("Error al obtener servicios", error);
     }
@@ -50,23 +51,11 @@ export function Servicios(){
       };
       
       if (editandoId) {
-        await fetch(`http://localhost:8080/api/servicios/${editandoId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(servicio),
-        });
-
+        await api.put(`/servicios/${editandoId}`,servicio);
         setEditandoId(null);
       } else {
-        await fetch("http://localhost:8080/api/servicios", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(servicio),
-        });
+        await api.post("/servicios",servicio)
+       
       }
 
       limpiarFormulario();
@@ -77,19 +66,14 @@ export function Servicios(){
   };
 
   const eliminarServicio = async (servicio) => {
-    try {
-      await fetch(`http://localhost:8080/api/servicios/${servicio.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          codigo: servicio.codigo,
+    const servicioDelete = {
+codigo: servicio.codigo,
           nombre: servicio.nombre,
           precioVenta: servicio.precioVenta,
           activo: false,
-        }),
-      });
+    }
+    try {
+      await api.put(`/servicios/${servicio.id}`,servicioDelete);
 
       fetchServicios();
     } catch (error) {
