@@ -162,14 +162,8 @@ export function Productos() {
   };
 
   const eliminarProducto = async (producto) => {
-    try {
-      await fetch(`http://localhost:8080/api/productos/${producto.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          codigo: producto.codigo,
+    const productoDelete = {
+      codigo: producto.codigo,
           codigoBarras: producto.codigoBarras,
           nombre: producto.nombre,
           descripcion: producto.descripcion,
@@ -183,13 +177,9 @@ export function Productos() {
           stockMinimo: producto.stockMinimo,
           unidadMedida: producto.unidadMedida,
           activo: false,
-        }),
-      });
-
-      fetchProductos();
-      fetchCategorias();
-      fetchMarcas();
-      fetchProveedores();
+    }
+    try {
+      await api.put(`/productos/${producto.id}`,productoDelete);
     } catch (error) {
       console.error("Error al eliminar producto", error);
     }
