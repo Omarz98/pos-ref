@@ -66,16 +66,21 @@ export function Productos() {
         producto.descripcion.toLowerCase().includes(busqueda.toLowerCase())),
   );
 
- async function cargarProductos() {
+  async function cargarProductos() {
     setError("");
     try {
-      const [productosResponse, categoriasResponse,marcasResponse, proveedoresResponse] = await Promise.all([
+      const [
+        productosResponse,
+        categoriasResponse,
+        marcasResponse,
+        proveedoresResponse,
+      ] = await Promise.all([
         api.get("/productos"),
         api.get("/categorias"),
         api.get("/marcas"),
         api.get("/proveedores"),
       ]);
-      
+
       const productosData = productosResponse.data ?? [];
       const categoriasData = categoriasResponse.data ?? [];
       const marcasData = marcasResponse.data ?? [];
@@ -85,7 +90,6 @@ export function Productos() {
       setCategorias(categoriasData);
       setMarcas(marcasData);
       setProveedores(proveedoresData);
-
     } catch (error) {
       console.error("Error al obtener productos", error);
       console.error("Código HTTP:", exception.response?.status);
@@ -102,9 +106,7 @@ export function Productos() {
         setError(mensajeBackend || "No fue posible cargar los productos");
       }
     }
-  };
-
-  
+  }
 
   const crearProducto = async () => {
     if (
@@ -146,12 +148,11 @@ export function Productos() {
       /*console.log(JSON.stringify(productos));*/
 
       if (editandoId) {
-      
-        const response = await api.put(`/productos/${editandoId}`,productos);
+        const response = await api.put(`/productos/${editandoId}`, productos);
 
         setEditandoId(null);
       } else {
-        const response = await api.post("/productos",productos);
+        const response = await api.post("/productos", productos);
       }
 
       limpiarFormulario();
@@ -164,22 +165,22 @@ export function Productos() {
   const eliminarProducto = async (producto) => {
     const productoDelete = {
       codigo: producto.codigo,
-          codigoBarras: producto.codigoBarras,
-          nombre: producto.nombre,
-          descripcion: producto.descripcion,
-          categoriaId: producto.categoriaId,
-          marcaId: producto.marcaId,
-          compatibilidadUniversal: producto.compatibilidadUniversal,
-          proveedorId: producto.proveedorId,
-          precioCompra: producto.precioCompra,
-          precioVenta: producto.precioVenta,
-          stockActual: producto.stockActual,
-          stockMinimo: producto.stockMinimo,
-          unidadMedida: producto.unidadMedida,
-          activo: false,
-    }
+      codigoBarras: producto.codigoBarras,
+      nombre: producto.nombre,
+      descripcion: producto.descripcion,
+      categoriaId: producto.categoriaId,
+      marcaId: producto.marcaId,
+      compatibilidadUniversal: producto.compatibilidadUniversal,
+      proveedorId: producto.proveedorId,
+      precioCompra: producto.precioCompra,
+      precioVenta: producto.precioVenta,
+      stockActual: producto.stockActual,
+      stockMinimo: producto.stockMinimo,
+      unidadMedida: producto.unidadMedida,
+      activo: false,
+    };
     try {
-      await api.put(`/productos/${producto.id}`,productoDelete);
+      await api.put(`/productos/${producto.id}`, productoDelete);
     } catch (error) {
       console.error("Error al eliminar producto", error);
     }
@@ -388,22 +389,25 @@ export function Productos() {
                         </option>
                       ))}
                     </select>
-
+                  </div>
+                  <div className="form-group">
                     <label>Universal</label>
-                    <select
-                      value={compatibilidadUniversal}
-                      onChange={(e) => setUniversal(e.target.value)}
-                      className="form-select"
-                    >
-                      <option value="">Selecciona una opcion</option>
 
-                      <option key="true" value="true">
-                        SI
-                      </option>
-                      <option key="false" value="false">
-                        NO
-                      </option>
-                    </select>
+                    <div className="switch-container">
+                      <label className="switch">
+                        <input
+                          type="checkbox"
+                          checked={compatibilidadUniversal}
+                          onChange={(e) => setUniversal(e.target.checked)}
+                        />
+
+                        <span className="slider"></span>
+                      </label>
+
+                      <span className="switch-text">
+                        {compatibilidadUniversal ? "Sí" : "No"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
