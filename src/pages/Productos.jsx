@@ -84,7 +84,7 @@ export function Productos() {
       setProductos(productosData);
       setCategorias(categoriasData);
       setMarcas(marcasData);
-      setProveedores(productosData);
+      setProveedores(proveedoresData);
 
     } catch (error) {
       console.error("Error al obtener productos", error);
