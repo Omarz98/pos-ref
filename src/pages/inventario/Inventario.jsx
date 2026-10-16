@@ -450,7 +450,9 @@ export default function Inventario() {
 
                     <th>Estado</th>
 
-                    <th>Compra</th>
+                    {tienePermiso("INVENTARIO_MOVIMIENTOS_VER") && (
+                      <th>Compra</th>
+                    )}
 
                     <th>Venta</th>
 
@@ -497,31 +499,34 @@ export default function Inventario() {
                             {producto.estado}
                           </span>
                         </td>
-
-                        <td>{formatoMoneda(producto.precioCompra)}</td>
+                        {tienePermiso("INVENTARIO_MOVIMIENTOS_VER") && (
+                          <td>{formatoMoneda(producto.precioCompra)}</td>
+                        )}
 
                         <td>{formatoMoneda(producto.precioVenta)}</td>
 
                         <td>
                           <div className="inventory-actions">
                             {tienePermiso("INVENTARIO_MOVIMIENTO_CREAR") && (
-                            <button
-                              type="button"
-                              className="inventory-action movement"
-                              title="Registrar movimiento"
-                              onClick={() => abrirMovimiento(producto)}
-                            >
-                              <FaPlus />
-                            </button>
+                              <button
+                                type="button"
+                                className="inventory-action movement"
+                                title="Registrar movimiento"
+                                onClick={() => abrirMovimiento(producto)}
+                              >
+                                <FaPlus />
+                              </button>
                             )}
-                            <button
-                              type="button"
-                              className="inventory-action history"
-                              title="Ver Kardex"
-                              onClick={() => verKardex(producto)}
-                            >
-                              <FaHistory />
-                            </button>
+                            {tienePermiso("INVENTARIO_MOVIMIENTO_CREAR") && (
+                              <button
+                                type="button"
+                                className="inventory-action history"
+                                title="Ver Kardex"
+                                onClick={() => verKardex(producto)}
+                              >
+                                <FaHistory />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
