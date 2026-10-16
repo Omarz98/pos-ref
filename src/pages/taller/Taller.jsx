@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
-  BsSpeedometer2, BsClipboardCheck, BsCalendar3, BsPlusCircle
+  BsSpeedometer2, BsClipboardCheck, BsCalendar3, BsPlusCircle, BsBicycle
 } from "react-icons/bs";
 import "./taller.css";
 
@@ -24,6 +24,8 @@ export function Taller() {
         <NavLink to="/taller" end><BsSpeedometer2 /> Dashboard</NavLink>
         <NavLink to="/ordenes"><BsClipboardCheck /> Órdenes</NavLink>
         <NavLink to="/taller/agenda"><BsCalendar3 /> Agenda</NavLink>
+        {/* NUEVA PESTAÑA */}
+        <NavLink to="/taller/motocicletas"><BsBicycle /> Motocicletas</NavLink>
       </nav>
 
       <main className="taller-content">
