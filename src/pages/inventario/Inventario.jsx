@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../services/api.js";
-
+import { useAuth } from "../../auth/AuthContext.jsx";
 import {
   FaBoxes,
   FaExclamationTriangle,
@@ -72,6 +72,8 @@ export default function Inventario() {
   const [error, setError] = useState("");
 
   const [cargando, setCargando] = useState(false);
+
+  const { tienePermiso } = useAuth();
 
   /* =========================================================
      CARGA INICIAL
@@ -264,7 +266,8 @@ export default function Inventario() {
 
     try {
       const response = await api.get(
-        `/inventario/producto/${producto.productoId}/movimientos`,
+        /*`/inventario/producto/${producto.productoId}/movimientos`,*/
+        `/inventario/movimientos/${producto.productoId}`,
       );
 
       setMovimientos(response.data ?? []);
@@ -501,6 +504,7 @@ export default function Inventario() {
 
                         <td>
                           <div className="inventory-actions">
+                            {tienePermiso("INVENTARIO_MOVIMIENTO_CREAR") && (
                             <button
                               type="button"
                               className="inventory-action movement"
@@ -509,7 +513,7 @@ export default function Inventario() {
                             >
                               <FaPlus />
                             </button>
-
+                            )}
                             <button
                               type="button"
                               className="inventory-action history"
@@ -637,23 +641,46 @@ export default function Inventario() {
 
       {modalMovimiento && (
         <div className="inventory-modal-overlay">
-          <div className="inventory-modal">
-            <div className="inventory-modal-header">
-              <h2>Movimiento de inventario</h2>
+          <div
+            className="inventory-modal inventory-movement-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="inventory-movement-title"
+          >
+            {/* HEADER */}
+            <div className="inventory-movement-header">
+              <div className="inventory-movement-heading">
+                <div className="inventory-movement-icon">
+                  <FaBoxes />
+                </div>
 
-              <button type="button" onClick={cerrarMovimiento}>
+                <div>
+                  <h2 id="inventory-movement-title">
+                    Movimiento de inventario
+                  </h2>
+                  <p>Registra un movimiento de mercancía</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="inventory-movement-close"
+                onClick={cerrarMovimiento}
+                aria-label="Cerrar"
+              >
                 <FaTimes />
               </button>
             </div>
 
-            <div className="inventory-modal-body">
+            {/* BODY */}
+            <div className="inventory-movement-body">
               <div className="inventory-field">
                 <label>Producto</label>
-
                 <input
+                  className="inventory-product-readonly"
                   value={
                     productoSeleccionado
-                      ? `${productoSeleccionado.nombre || ""}-${productoSeleccionado.descripcion || ""}`
+                      ? `${productoSeleccionado.nombre || ""} - ${productoSeleccionado.descripcion || ""}`
                       : ""
                   }
                   disabled
@@ -661,55 +688,89 @@ export default function Inventario() {
               </div>
 
               <div className="inventory-field">
-                <label>Tipo</label>
+                <label htmlFor="tipoMovimiento">Tipo de movimiento</label>
 
-                <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
-                  <option value="ENTRADA">Entrada</option>
+                <select
+                  id="tipoMovimiento"
+                  value={tipo}
+                  onChange={(e) => setTipo(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>
+                    Selecciona un movimiento
+                  </option>
 
-                  <option value="SALIDA">Salida</option>
+                  <optgroup label="Movimientos generales">
+                    <option value="ENTRADA">Entrada</option>
+                    <option value="SALIDA">Salida</option>
+                  </optgroup>
 
-                  <option value="AJUSTE_ENTRADA">Ajuste entrada</option>
+                  <optgroup label="Ajustes">
+                    <option value="AJUSTE_ENTRADA">Ajuste de entrada</option>
+                    <option value="AJUSTE_SALIDA">Ajuste de salida</option>
+                  </optgroup>
 
-                  <option value="AJUSTE_SALIDA">Ajuste salida</option>
+                  <optgroup label="Compras">
+                    <option value="COMPRA">Compra de mercancía</option>
+                  </optgroup>
+
+                  <optgroup label="Devoluciones">
+                    <option value="DEVOLUCION_CLIENTE">
+                      Devolución de cliente
+                    </option>
+                    <option value="DEVOLUCION_PROVEEDOR">
+                      Devolución a proveedor
+                    </option>
+                  </optgroup>
+
+                  <optgroup label="Inventario">
+                    <option value="INVENTARIO_INICIAL">
+                      Inventario inicial
+                    </option>
+                  </optgroup>
                 </select>
               </div>
 
-              <div className="inventory-field">
-                <label>Cantidad</label>
+              {/* CANTIDAD Y COSTO */}
+              <div className="inventory-movement-grid">
+                <div className="inventory-field">
+                  <label>Cantidad</label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={cantidad}
+                    onChange={(e) => setCantidad(e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
 
-                <input
-                  type="number"
-                  min="0.001"
-                  step="0.001"
-                  value={cantidad}
-                  onChange={(e) => setCantidad(e.target.value)}
-                />
-              </div>
-
-              <div className="inventory-field">
-                <label>Costo unitario</label>
-
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={costoUnitario}
-                  onChange={(e) => setCostoUnitario(e.target.value)}
-                />
+                <div className="inventory-field">
+                  <label>Costo unitario</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={costoUnitario}
+                    onChange={(e) => setCostoUnitario(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
               </div>
 
               <div className="inventory-field">
                 <label>Motivo</label>
-
                 <textarea
                   value={motivo}
                   onChange={(e) => setMotivo(e.target.value)}
-                  placeholder="Motivo del movimiento"
+                  placeholder="Describe el motivo del movimiento..."
+                  rows={3}
                 />
               </div>
             </div>
 
-            <div className="inventory-modal-footer">
+            {/* FOOTER */}
+            <div className="inventory-movement-footer">
               <button
                 type="button"
                 className="inventory-cancel"
@@ -723,7 +784,7 @@ export default function Inventario() {
                 className="inventory-save"
                 onClick={registrarMovimiento}
               >
-                Registrar
+                Registrar movimiento
               </button>
             </div>
           </div>
@@ -735,73 +796,121 @@ export default function Inventario() {
       ===================================================== */}
 
       {modalKardex && (
-        <div className="inventory-modal-overlay">
+        <div
+          className="inventory-modal-overlay"
+          onClick={() => setModalKardex(false)}
+        >
           <div
-            className="
-              inventory-modal
-              inventory-modal-large
-            "
+            className="inventory-modal inventory-modal-large inventory-kardex-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="kardex-title"
+            onClick={(e) => e.stopPropagation()}
           >
+            {/* HEADER */}
             <div className="inventory-modal-header">
-              <div>
-                <h2>Kardex</h2>
+              <div className="inventory-kardex-title">
+                <h2 id="kardex-title">Historial de inventario</h2>
 
-                <span>{productoSeleccionado?.nombre}</span>
+                <span>
+                  {productoSeleccionado?.nombre}
+                  {productoSeleccionado?.descripcion &&
+                    ` - ${productoSeleccionado.descripcion}`}
+                </span>
               </div>
 
-              <button type="button" onClick={() => setModalKardex(false)}>
+              <button
+                type="button"
+                className="inventory-modal-close"
+                aria-label="Cerrar historial"
+                onClick={() => setModalKardex(false)}
+              >
                 <FaTimes />
               </button>
             </div>
 
-            <div className="inventory-table-wrapper">
-              <table className="inventory-table">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
+            {/* RESUMEN */}
+            <div className="inventory-kardex-summary">
+              <div>
+                <span>Movimientos registrados</span>
+                <strong>{movimientos.length}</strong>
+              </div>
 
-                    <th>Tipo</th>
+              <div>
+                <span>Stock actual</span>
+                <strong>{productoSeleccionado?.stockActual ?? 0}</strong>
+              </div>
+            </div>
 
-                    <th>Cantidad</th>
-
-                    <th>Anterior</th>
-
-                    <th>Nuevo</th>
-
-                    <th>Motivo</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {movimientos.length === 0 ? (
+            {/* BODY CON SCROLL */}
+            <div className="inventory-kardex-body">
+              <div className="inventory-table-wrapper">
+                <table className="inventory-table">
+                  <thead>
                     <tr>
-                      <td colSpan="6" className="inventory-empty">
-                        No existen movimientos para este producto.
-                      </td>
+                      <th>Fecha</th>
+                      <th>Tipo</th>
+                      <th>Cantidad</th>
+                      <th>Anterior</th>
+                      <th>Nuevo</th>
+                      <th>Motivo</th>
                     </tr>
-                  ) : (
-                    movimientos.map((movimiento) => (
-                      <tr key={movimiento.id}>
-                        <td>
-                          {movimiento.fecha
-                            ? new Date(movimiento.fecha).toLocaleString("es-MX")
-                            : "-"}
+                  </thead>
+
+                  <tbody>
+                    {movimientos.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="inventory-empty">
+                          No existen movimientos para este producto.
                         </td>
-
-                        <td>{movimiento.tipo}</td>
-
-                        <td>{movimiento.cantidad}</td>
-
-                        <td>{movimiento.stockAnterior}</td>
-
-                        <td>{movimiento.stockNuevo}</td>
-
-                        <td>{movimiento.motivo || "-"}</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      movimientos.map((movimiento) => (
+                        <tr key={movimiento.id}>
+                          <td>
+                            {movimiento.fechaMovimiento
+                              ? new Date(
+                                  movimiento.fechaMovimiento,
+                                ).toLocaleString("es-MX")
+                              : "-"}
+                          </td>
+
+                          <td>
+                            <span className="inventory-movement-type">
+                              {movimiento.tipoMovimiento?.replaceAll("_", " ")}
+                            </span>
+                          </td>
+
+                          <td>{movimiento.cantidad}</td>
+
+                          <td>{movimiento.stockAnterior}</td>
+
+                          <td>
+                            <strong>{movimiento.stockNuevo}</strong>
+                          </td>
+
+                          <td className="inventory-movement-reason">
+                            {movimiento.motivo || "-"}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* FOOTER */}
+            <div className="inventory-kardex-footer">
+              <span>Total: {movimientos.length} movimientos</span>
+
+              <button
+                type="button"
+                className="inventory-kardex-btn-close"
+                onClick={() => setModalKardex(false)}
+              >
+                Cerrar
+              </button>
             </div>
           </div>
         </div>
