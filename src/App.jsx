@@ -40,6 +40,9 @@ import { DetalleOrdenTaller } from "./pages/taller/DetalleOrdenTaller";
 import { AgendaTaller } from "./pages/taller/AgendaTaller";
 import { Taller } from "./pages/taller/Taller";
 import Inventario from "./pages/inventario/Inventario";
+import Motocicletas from "./pages/Motocicletas/Motocicletas";
+import MotoForm from "./pages/Motocicletas/MotoForm";
+import MotoDetalle from "./pages/Motocicletas/MotoDetalle";
 
 function App() {
   const [theme, setTheme] = useState("light");
@@ -192,16 +195,16 @@ function App() {
               <Route path="/home" element={<Home />} />
             </Route>
 
-             <Route
-                  element={
-                    <PermissionRoute
-                      permiso="INVENTARIO_VER"
-                      roles={["ADMINISTRADOR", "ENCARGADO"]}
-                    />
-                  }
-                >
-                  <Route path="/inventario" element={<Inventario />} />
-                </Route>
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="INVENTARIO_VER"
+                  roles={["ADMINISTRADOR", "ENCARGADO"]}
+                />
+              }
+            >
+              <Route path="/inventario" element={<Inventario />} />
+            </Route>
 
             <Route
               element={
@@ -237,8 +240,6 @@ function App() {
                   <Route path="ordenes/nueva" element={<NuevaOrdenTaller />} />
                 </Route>
 
-               
-
                 <Route
                   element={
                     <PermissionRoute
@@ -249,7 +250,29 @@ function App() {
                 >
                   <Route path="agenda" element={<AgendaTaller />} />
                 </Route>
-              </Route>
+
+                <Route
+                  element={
+                    <PermissionRoute
+                      permiso="TALLER_VER"
+                      roles={["ADMINISTRADOR", "ENCARGADO", "MECANICO"]}
+                    />
+                  }
+                >
+                  <Route path="motocicletas" element={<Motocicletas />} />
+                </Route>
+               
+
+                  <Route path="motocicletas/nueva" element={<MotoForm />} />
+
+                  <Route
+                    path="motocicletas/:id/editar"
+                    element={<MotoForm />}
+                  />
+
+                  <Route path="motocicletas/:id" element={<MotoDetalle />} />
+                </Route>
+             
             </Route>
           </Route>
         </Route>
