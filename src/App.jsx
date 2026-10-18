@@ -215,6 +215,15 @@ function App() {
               }
             >
               <Route path="taller" element={<Taller />}>
+                {/* DASHBOARD */}
+                <Route
+                  element={
+                    <PermissionRoute
+                      permiso="TALLER_DASHBOARD_VER"
+                      roles={["ADMINISTRADOR", "ENCARGADO", "MECANICO"]}
+                    />
+                  }
+                ></Route>
                 <Route index element={<TallerDashboard />} />
 
                 <Route
@@ -261,18 +270,13 @@ function App() {
                 >
                   <Route path="motocicletas" element={<Motocicletas />} />
                 </Route>
-               
 
-                  <Route path="motocicletas/nueva" element={<MotoForm />} />
+                <Route path="motocicletas/nueva" element={<MotoForm />} />
 
-                  <Route
-                    path="motocicletas/:id/editar"
-                    element={<MotoForm />}
-                  />
+                <Route path="motocicletas/:id/editar" element={<MotoForm />} />
 
-                  <Route path="motocicletas/:id" element={<MotoDetalle />} />
-                </Route>
-             
+                <Route path="motocicletas/:id" element={<MotoDetalle />} />
+              </Route>
             </Route>
           </Route>
         </Route>
