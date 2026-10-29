@@ -1,11 +1,6 @@
-import {
-  FaPrint,
-  FaReceipt,
-  FaTimes,
-  FaShoppingCart,
-} from "react-icons/fa";
+import { FaPrint, FaReceipt, FaTimes, FaShoppingCart } from "react-icons/fa";
 import { PiMotorcycleFill } from "react-icons/pi";
-
+import { useState } from "react";
 const moneda = (valor) =>
   Number(valor || 0).toLocaleString("es-MX", {
     style: "currency",
@@ -27,14 +22,26 @@ const fechaTicket = (fecha) => {
   });
 };
 
-export default function TicketModal({
-  ticket,
-  onClose,
-  onNuevaVenta,
-}) {
+export default function TicketModal({ ticket, onClose, onNuevaVenta }) {
+  const [tamanoPapel, setTamanoPapel] = useState("80");
+
   if (!ticket) return null;
 
   const imprimir = () => {
+    const clasePapel = `ticket-print-${tamanoPapel}`;
+
+    document.body.classList.remove("ticket-print-58", "ticket-print-80");
+
+    document.body.classList.add(clasePapel);
+
+    const limpiarImpresion = () => {
+      document.body.classList.remove("ticket-print-58", "ticket-print-80");
+
+      window.removeEventListener("afterprint", limpiarImpresion);
+    };
+
+    window.addEventListener("afterprint", limpiarImpresion);
+
     window.print();
   };
 
@@ -43,22 +50,43 @@ export default function TicketModal({
       <div className="ticket-dialog">
         <div className="ticket-dialog-header no-print">
           <div>
-            <span className="modal-eyebrow">
-              Venta registrada
-            </span>
+            <span className="modal-eyebrow">Venta registrada</span>
             <h2>Ticket de venta</h2>
           </div>
 
-          <button
-            type="button"
-            className="modal-close"
-            onClick={onClose}
-          >
+          <button type="button" className="modal-close" onClick={onClose}>
             <FaTimes />
           </button>
         </div>
 
-        <div className="ticket-paper ticket-print-area">
+        <div className="ticket-print-options no-print">
+          <div>
+            <strong>Formato de impresión</strong>
+            <small>Selecciona el ancho del papel térmico</small>
+          </div>
+
+          <div className="ticket-size-buttons">
+            <button
+              type="button"
+              className={tamanoPapel === "58" ? "active" : ""}
+              onClick={() => setTamanoPapel("58")}
+            >
+              58 mm
+            </button>
+
+            <button
+              type="button"
+              className={tamanoPapel === "80" ? "active" : ""}
+              onClick={() => setTamanoPapel("80")}
+            >
+              80 mm
+            </button>
+          </div>
+        </div>
+
+        <div
+          className={`ticket-paper ticket-print-area ticket-paper--${tamanoPapel}`}
+        >
           <div className="ticket-business">
             <PiMotorcycleFill className="ticket-logo" />
 
@@ -73,9 +101,7 @@ export default function TicketModal({
           <div className="ticket-meta">
             <div>
               <span>Ticket</span>
-              <strong>
-                #{ticket.folio || ticket.id || "N/D"}
-              </strong>
+              <strong>#{ticket.folio || ticket.id || "N/D"}</strong>
             </div>
 
             <div>
@@ -95,9 +121,7 @@ export default function TicketModal({
 
             <div className="ticket-meta-full">
               <span>Cliente</span>
-              <strong>
-                {ticket.clienteNombre || "Público general"}
-              </strong>
+              <strong>{ticket.clienteNombre || "Público general"}</strong>
             </div>
 
             {ticket.ordenFolio && (
@@ -119,22 +143,16 @@ export default function TicketModal({
                 <div className="ticket-item-name">
                   <strong>{item.nombre}</strong>
 
-                  {item.codigo && (
-                    <small>{item.codigo}</small>
-                  )}
+                  {item.codigo && <small>{item.codigo}</small>}
                 </div>
 
                 <div className="ticket-item-detail">
                   <span>
-                    {Number(item.cantidad)} x{" "}
-                    {moneda(item.precio)}
+                    {Number(item.cantidad)} x {moneda(item.precio)}
                   </span>
 
                   <strong>
-                    {moneda(
-                      Number(item.cantidad) *
-                        Number(item.precio),
-                    )}
+                    {moneda(Number(item.cantidad) * Number(item.precio))}
                   </strong>
                 </div>
               </div>
@@ -158,13 +176,37 @@ export default function TicketModal({
               <span>TOTAL</span>
               <strong>{moneda(ticket.total)}</strong>
             </div>
+
+            {Number(ticket.anticipoAplicado || 0) > 0 && (
+              <>
+                <div className="ticket-advance">
+                  <span>Anticipo de Taller</span>
+                  <strong>-{moneda(ticket.anticipoAplicado)}</strong>
+                </div>
+
+                <div className="ticket-remaining">
+                  <span>Restante por cobrar</span>
+                  <strong>
+                    {moneda(
+                      Math.max(
+                        Number(ticket.total || 0) -
+                          Number(ticket.anticipoAplicado || 0),
+                        0,
+                      ),
+                    )}
+                  </strong>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="ticket-separator" />
 
           <div className="ticket-payments">
             <strong className="ticket-section-title">
-              Forma de pago
+              {Number(ticket.anticipoAplicado || 0) > 0
+                ? "Pago realizado en POS"
+                : "Forma de pago"}
             </strong>
 
             {ticket.pagosRecibidos?.map((pago, index) => (
@@ -189,9 +231,7 @@ export default function TicketModal({
             {Number(ticket.saldoPendiente || 0) > 0 && (
               <div className="ticket-pending">
                 <span>SALDO PENDIENTE</span>
-                <strong>
-                  {moneda(ticket.saldoPendiente)}
-                </strong>
+                <strong>{moneda(ticket.saldoPendiente)}</strong>
               </div>
             )}
           </div>
@@ -200,13 +240,9 @@ export default function TicketModal({
 
           <div className="ticket-footer">
             <strong>¡Gracias por su preferencia!</strong>
-            <span>
-              Conserve este ticket para cualquier aclaración.
-            </span>
+            <span>Conserve este ticket para cualquier aclaración.</span>
 
-            <small>
-              Venta #{ticket.id || ticket.folio || ""}
-            </small>
+            <small>Venta #{ticket.id || ticket.folio || ""}</small>
           </div>
         </div>
 

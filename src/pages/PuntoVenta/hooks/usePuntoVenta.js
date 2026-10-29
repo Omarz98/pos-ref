@@ -161,19 +161,15 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
         ...orden,
         tipo: "ORDEN",
         codigo: orden.folio || orden.numeroOrden || `ORD-${orden.id}`,
-        nombre: `Orden ${orden.folio || orden.numeroOrden || orden.id} - ${
-          orden.clienteNombre || "Cliente"
-        }`,
-        precioVenta: Number(
-          orden.saldoPendiente != null
-            ? orden.saldoPendiente
-            : orden.total || 0,
-        ),
-        precioMostrar: Number(
-          orden.saldoPendiente != null
-            ? orden.saldoPendiente
-            : orden.total || 0,
-        ),
+
+        nombre: `Orden ${
+          orden.folio || orden.numeroOrden || orden.id
+        } - ${orden.clienteNombre || "Cliente"}`,
+
+        precioVenta: Number(orden.total || 0),
+        precioMostrar: Number(orden.saldoPendiente ?? orden.total ?? 0),
+
+        anticipo: Number(orden.anticipo || 0),
         stockActual: null,
         activo: true,
       })),
@@ -337,10 +333,17 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
     setOrdenSeleccionada(orden);
     setClienteId(String(orden.clienteId ?? ""));
 
+    const anticipo = Number(orden.anticipo ?? 0);
+
+    const saldoOrden = Math.max(
+      Number(orden.saldoPendiente ?? Number(orden.total ?? 0) - anticipo),
+      0,
+    );
+
     setPagos([
       {
         metodo: "EFECTIVO",
-        monto: Number(orden.saldoPendiente ?? 0),
+        monto: Number(saldoOrden.toFixed(2)),
       },
     ]);
 
@@ -444,19 +447,31 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
   const subtotal = total / 1.16;
   const iva = total - subtotal;
 
+  const anticipoAplicado = useMemo(() => {
+    if (!ordenSeleccionada) return 0;
+
+    const anticipo = Number(ordenSeleccionada.anticipo ?? 0);
+
+    return Math.min(Math.max(anticipo, 0), total);
+  }, [ordenSeleccionada, total]);
+
+  const totalPorCobrar = Math.max(total - anticipoAplicado, 0);
+
   const totalPagado = useMemo(
     () => pagos.reduce((acc, pago) => acc + Number(pago.monto || 0), 0),
     [pagos],
   );
 
-  const saldoPendiente = total - totalPagado;
+  const saldoPendiente = Math.max(totalPorCobrar - totalPagado, 0);
 
   const efectivoPagado = pagos
     .filter((pago) => pago.metodo === "EFECTIVO")
     .reduce((acc, pago) => acc + Number(pago.monto || 0), 0);
 
   const cambio =
-    saldoPendiente < 0 && efectivoPagado > 0 ? Math.abs(saldoPendiente) : 0;
+    efectivoPagado > 0
+      ? Math.min(efectivoPagado, Math.max(totalPagado - totalPorCobrar, 0))
+      : 0;
 
   const actualizarPago = (index, campo, valor) => {
     setPagos((actual) =>
@@ -515,7 +530,7 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
      * El ticket debe mostrar recibido $20 y cambio $2,
      * pero al backend solamente se aplican $18.
      */
-    let exceso = Math.max(totalPagado - total, 0);
+    let exceso = Math.max(totalPagado - totalPorCobrar, 0);
 
     const pagosNormalizados = pagosValidos
       .map((pago) => {
@@ -535,12 +550,20 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
       })
       .filter((pago) => pago.monto > 0);
 
+    if (exceso > 0.001) {
+      setError(
+        "Los pagos exceden el saldo por cobrar. " +
+          "Solo se permite entregar cambio en efectivo.",
+      );
+      return false;
+    }
+
     const totalAplicado = pagosNormalizados.reduce(
       (acc, pago) => acc + Number(pago.monto),
       0,
     );
 
-    const saldoAplicado = Math.max(total - totalAplicado, 0);
+    const saldoAplicado = Math.max(totalPorCobrar - totalAplicado, 0);
 
     const ventaRequest = {
       ordenServicioId: ordenSeleccionada?.id || null,
@@ -565,6 +588,10 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
       subtotal: Number(subtotal.toFixed(2)),
       iva: Number(iva.toFixed(2)),
       total: Number(total.toFixed(2)),
+
+      anticipoAplicado: Number(anticipoAplicado.toFixed(2)),
+
+      totalPorCobrar: Number(totalPorCobrar.toFixed(2)),
 
       pagos: pagosNormalizados,
 
@@ -629,6 +656,9 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
         subtotal: Number(subtotal.toFixed(2)),
         iva: Number(iva.toFixed(2)),
         total: Number(total.toFixed(2)),
+
+        // Anticipo registrado previamente en Taller
+        anticipoAplicado: Number(ventaGuardada.anticipoAplicado ?? 0),
 
         /*
          * Lo que físicamente entregó/pagó el cliente.
@@ -717,6 +747,8 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
     total,
     subtotal,
     iva,
+    anticipoAplicado,
+    totalPorCobrar,
     totalPagado,
     saldoPendiente,
     cambio,

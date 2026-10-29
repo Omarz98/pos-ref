@@ -23,6 +23,9 @@ export function Ventas() {
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("TODAS");
 
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [registrosPorPagina, setRegistrosPorPagina] = useState(10);
+
   const [ventaSeleccionada, setVentaSeleccionada] = useState(null);
   const [mostrarDetalle, setMostrarDetalle] = useState(false);
   const [mostrarTicket, setMostrarTicket] = useState(false);
@@ -37,6 +40,8 @@ export function Ventas() {
       monto: 0,
     },
   ]);
+
+  const [mensajeCobro, setMensajeCobro] = useState("");
 
   useEffect(() => {
     fetchVentas();
@@ -131,25 +136,54 @@ export function Ventas() {
   const ventasFiltradas = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
 
-    return ventas.filter((venta) => {
-      const coincideEstado =
-        filtroEstado === "TODAS" ||
-        venta.estado === filtroEstado;
+    return ventas
+      .filter((venta) => {
+        const coincideEstado =
+          filtroEstado === "TODAS" || venta.estado === filtroEstado;
 
-      if (!coincideEstado) return false;
+        if (!coincideEstado) return false;
 
-      if (!texto) return true;
+        if (!texto) return true;
 
-      return [
-        venta.id,
-        venta.folio,
-        venta.clienteNombre,
-        venta.estado,
-      ]
-        .map((value) => String(value || "").toLowerCase())
-        .some((value) => value.includes(texto));
-    });
+        return [venta.id, venta.folio, venta.clienteNombre, venta.estado]
+          .map((value) => String(value ?? "").toLowerCase())
+          .some((value) => value.includes(texto));
+      })
+      .sort((a, b) => {
+        const fechaA = new Date(a.fecha).getTime();
+        const fechaB = new Date(b.fecha).getTime();
+
+        const tiempoA = Number.isFinite(fechaA) ? fechaA : 0;
+        const tiempoB = Number.isFinite(fechaB) ? fechaB : 0;
+
+        if (tiempoA !== tiempoB) {
+          return tiempoB - tiempoA;
+        }
+
+        return Number(b.id || 0) - Number(a.id || 0);
+      });
   }, [ventas, busqueda, filtroEstado]);
+
+  const totalRegistros = ventasFiltradas.length;
+
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(totalRegistros / registrosPorPagina),
+  );
+
+  const paginaSegura = Math.min(paginaActual, totalPaginas);
+
+  const indiceInicio = (paginaSegura - 1) * registrosPorPagina;
+
+  const indiceFin = Math.min(indiceInicio + registrosPorPagina, totalRegistros);
+
+  const ventasPaginadas = useMemo(() => {
+    return ventasFiltradas.slice(indiceInicio, indiceFin);
+  }, [ventasFiltradas, indiceInicio, indiceFin]);
+
+  useEffect(() => {
+    setPaginaActual(1);
+  }, [busqueda, filtroEstado, registrosPorPagina]);
 
   const metricas = useMemo(() => {
     const totalVentas = ventas.reduce(
@@ -157,17 +191,12 @@ export function Ventas() {
       0,
     );
 
-    const pagadas = ventas.filter(
-      (venta) => venta.estado === "PAGADA",
-    );
+    const pagadas = ventas.filter((venta) => venta.estado === "PAGADA");
 
-    const pendientes = ventas.filter(
-      (venta) => venta.estado === "PENDIENTE",
-    );
+    const pendientes = ventas.filter((venta) => venta.estado === "PENDIENTE");
 
     const saldoPendiente = pendientes.reduce(
-      (acc, venta) =>
-        acc + Number(venta.saldoPendiente || 0),
+      (acc, venta) => acc + Number(venta.saldoPendiente || 0),
       0,
     );
 
@@ -193,9 +222,7 @@ export function Ventas() {
   const eliminarMetodoPago = (index) => {
     if (pagos.length === 1) return;
 
-    setPagos((actuales) =>
-      actuales.filter((_, i) => i !== index),
-    );
+    setPagos((actuales) => actuales.filter((_, i) => i !== index));
   };
 
   const actualizarPago = (index, campo, valor) => {
@@ -204,10 +231,7 @@ export function Ventas() {
         i === index
           ? {
               ...pago,
-              [campo]:
-                campo === "monto"
-                  ? Number(valor || 0)
-                  : valor,
+              [campo]: campo === "monto" ? Number(valor || 0) : valor,
             }
           : pago,
       ),
@@ -219,19 +243,11 @@ export function Ventas() {
     0,
   );
 
-  const saldoActual = Number(
-    ventaSeleccionada?.saldoPendiente || 0,
-  );
+  const saldoActual = Number(ventaSeleccionada?.saldoPendiente || 0);
 
-  const nuevoSaldoPendiente = Math.max(
-    saldoActual - nuevoPago,
-    0,
-  );
+  const nuevoSaldoPendiente = Math.max(saldoActual - nuevoPago, 0);
 
-  const cambio = Math.max(
-    nuevoPago - saldoActual,
-    0,
-  );
+  const cambio = Math.max(nuevoPago - saldoActual, 0);
 
   const cobrarVenta = async () => {
     if (!ventaSeleccionada) {
@@ -244,9 +260,7 @@ export function Ventas() {
       return;
     }
 
-    const pagosValidos = pagos.filter(
-      (pago) => Number(pago.monto || 0) > 0,
-    );
+    const pagosValidos = pagos.filter((pago) => Number(pago.monto || 0) > 0);
 
     if (pagosValidos.length === 0) {
       setError("Captura al menos un pago mayor a cero");
@@ -263,10 +277,7 @@ export function Ventas() {
       .map((pago) => {
         let monto = Number(pago.monto || 0);
 
-        if (
-          exceso > 0 &&
-          pago.metodo === "EFECTIVO"
-        ) {
+        if (exceso > 0 && pago.metodo === "EFECTIVO") {
           const descuento = Math.min(monto, exceso);
           monto -= descuento;
           exceso -= descuento;
@@ -283,12 +294,9 @@ export function Ventas() {
     setError("");
 
     try {
-      const response = await api.put(
-        `/ventas/${ventaSeleccionada.id}/cobrar`,
-        {
-          pagos: pagosAplicados,
-        },
-      );
+      const response = await api.put(`/ventas/${ventaSeleccionada.id}/cobrar`, {
+        pagos: pagosAplicados,
+      });
 
       const actualizada = response.data;
 
@@ -302,6 +310,12 @@ export function Ventas() {
           monto: 0,
         },
       ]);
+
+      setMensajeCobro(
+        actualizada.estado === "PAGADA"
+          ? "¡Venta liquidada correctamente!"
+          : "¡Abono registrado correctamente!",
+      );
     } catch (exception) {
       console.error("Error al registrar cobro:", exception);
 
@@ -319,12 +333,7 @@ export function Ventas() {
   };
 
   const obtenerPrecioItem = (item) =>
-    Number(
-      item.precioUnitario ??
-        item.precio ??
-        item.precioVenta ??
-        0,
-    );
+    Number(item.precioUnitario ?? item.precio ?? item.precioVenta ?? 0);
 
   const obtenerNombreItem = (item) =>
     item.productoNombre ||
@@ -332,22 +341,29 @@ export function Ventas() {
     item.nombreProducto ||
     item.nombreServicio ||
     item.nombre ||
-    (item.tipo === "SERVICIO"
-      ? "Servicio"
-      : "Producto");
+    (item.tipo === "SERVICIO" ? "Servicio" : "Producto");
 
   /*
    * Adaptador entre VentaResponse y el TicketModal del POS.
    * Así POS y Ventas utilizan exactamente el mismo ticket.
    */
   const construirTicket = (venta) => {
-    const items = Array.isArray(venta?.items)
-      ? venta.items
+    const items = Array.isArray(venta?.items) ? venta.items : [];
+
+    const pagosRegistrados = Array.isArray(venta?.pagos) ? venta.pagos : [];
+
+    const anticipoAplicado = Number(venta?.anticipoAplicado ?? 0);
+
+    const pagosAnticipo = Array.isArray(venta?.pagosAnticipo)
+      ? venta.pagosAnticipo
       : [];
 
-    const pagosRegistrados = Array.isArray(venta?.pagos)
-      ? venta.pagos
-      : [];
+    const totalPagosPOS = pagosRegistrados.reduce(
+      (total, pago) => total + Number(pago.monto || 0),
+      0,
+    );
+
+    const totalCubierto = anticipoAplicado + totalPagosPOS;
 
     const totalPagos = pagosRegistrados.reduce(
       (acc, pago) => acc + Number(pago.monto || 0),
@@ -356,43 +372,22 @@ export function Ventas() {
 
     return {
       id: venta?.id,
-      folio:
-        venta?.folio ||
-        venta?.numeroVenta ||
-        venta?.id,
+      folio: venta?.folio || venta?.numeroVenta || venta?.id,
 
-      fecha:
-        venta?.fecha ||
-        venta?.fechaVenta ||
-        venta?.fechaCreacion,
+      fecha: venta?.fecha || venta?.fechaVenta || venta?.fechaCreacion,
 
-      cajaNombre:
-        venta?.cajaNombre ||
-        venta?.nombreCaja ||
-        "Caja 1",
+      cajaNombre: venta?.cajaNombre || venta?.nombreCaja || "Caja 1",
 
       usuario:
-        venta?.usuario ||
-        venta?.usuarioNombre ||
-        venta?.cajero ||
-        "Usuario",
+        venta?.usuario || venta?.usuarioNombre || venta?.cajero || "Usuario",
 
-      clienteNombre:
-        venta?.clienteNombre ||
-        "Público general",
+      clienteNombre: venta?.clienteNombre || "Público general",
 
-      ordenFolio:
-        venta?.ordenFolio ||
-        venta?.folioOrden ||
-        null,
+      ordenFolio: venta?.ordenFolio || venta?.folioOrden || null,
 
       items: items.map((item) => ({
         id: item.id,
-        codigo:
-          item.codigo ||
-          item.productoCodigo ||
-          item.servicioCodigo ||
-          "",
+        codigo: item.codigo || item.productoCodigo || item.servicioCodigo || "",
         tipo: item.tipo,
         nombre: obtenerNombreItem(item),
         cantidad: Number(item.cantidad || 0),
@@ -403,30 +398,28 @@ export function Ventas() {
       iva: Number(venta?.iva || 0),
       total: Number(venta?.total || 0),
 
+      anticipoAplicado,
+
+      pagosAnticipo: pagosAnticipo.map((pago) => ({
+        metodo: pago.metodo || pago.metodoPago || "Sin método",
+        monto: Number(pago.monto || 0),
+      })),
+
+      totalCubierto,
+
       pagosRecibidos: pagosRegistrados.map((pago) => ({
-        metodo:
-          pago.metodo ||
-          pago.metodoPago ||
-          "Sin método",
+        metodo: pago.metodo || pago.metodoPago || "Sin método",
         monto: Number(pago.monto || 0),
       })),
 
       pagosAplicados: pagosRegistrados.map((pago) => ({
-        metodo:
-          pago.metodo ||
-          pago.metodoPago ||
-          "Sin método",
+        metodo: pago.metodo || pago.metodoPago || "Sin método",
         monto: Number(pago.monto || 0),
       })),
 
-      totalRecibido:
-        totalPagos > 0
-          ? totalPagos
-          : Number(venta?.totalPagado || 0),
+      totalRecibido: totalPagosPOS,
 
-      totalAplicado: Number(
-        venta?.totalPagado || totalPagos || 0,
-      ),
+      totalAplicado: Number(venta?.totalPagado || totalPagos || 0),
 
       /*
        * Una venta histórica normalmente no almacena el efectivo
@@ -436,9 +429,7 @@ export function Ventas() {
        */
       cambio: Number(venta?.cambio || 0),
 
-      saldoPendiente: Number(
-        venta?.saldoPendiente || 0,
-      ),
+      saldoPendiente: Number(venta?.saldoPendiente || 0),
 
       estado: venta?.estado,
     };
@@ -458,10 +449,7 @@ export function Ventas() {
 
           <div>
             <h1>Ventas</h1>
-            <p>
-              Historial, cobros pendientes y reimpresión de
-              tickets.
-            </p>
+            <p>Historial, cobros pendientes y reimpresión de tickets.</p>
           </div>
         </div>
       </header>
@@ -485,9 +473,7 @@ export function Ventas() {
 
           <div>
             <span>Importe total</span>
-            <strong>
-              {formatearMoneda(metricas.totalVentas)}
-            </strong>
+            <strong>{formatearMoneda(metricas.totalVentas)}</strong>
           </div>
         </article>
 
@@ -509,9 +495,7 @@ export function Ventas() {
 
           <div>
             <span>Saldo por cobrar</span>
-            <strong>
-              {formatearMoneda(metricas.saldoPendiente)}
-            </strong>
+            <strong>{formatearMoneda(metricas.saldoPendiente)}</strong>
           </div>
         </article>
       </section>
@@ -524,9 +508,7 @@ export function Ventas() {
             <input
               type="text"
               value={busqueda}
-              onChange={(e) =>
-                setBusqueda(e.target.value)
-              }
+              onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar por folio, cliente o estado..."
             />
           </div>
@@ -552,14 +534,8 @@ export function Ventas() {
               <button
                 type="button"
                 key={filtro.value}
-                className={
-                  filtroEstado === filtro.value
-                    ? "active"
-                    : ""
-                }
-                onClick={() =>
-                  setFiltroEstado(filtro.value)
-                }
+                className={filtroEstado === filtro.value ? "active" : ""}
+                onClick={() => setFiltroEstado(filtro.value)}
               >
                 {filtro.label}
                 <span>{filtro.count}</span>
@@ -568,11 +544,7 @@ export function Ventas() {
           </div>
         </div>
 
-        {error && (
-          <div className="sales-error">
-            {error}
-          </div>
-        )}
+        {error && <div className="sales-error">{error}</div>}
 
         <div className="sales-table-wrapper">
           <table className="sales-table">
@@ -592,25 +564,18 @@ export function Ventas() {
             <tbody>
               {cargando ? (
                 <tr>
-                  <td
-                    colSpan="8"
-                    className="sales-table-empty"
-                  >
+                  <td colSpan="8" className="sales-table-empty">
                     Consultando ventas...
                   </td>
                 </tr>
               ) : ventasFiltradas.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="8"
-                    className="sales-table-empty"
-                  >
-                    No hay ventas que coincidan con los
-                    filtros.
+                  <td colSpan="8" className="sales-table-empty">
+                    No hay ventas que coincidan con los filtros.
                   </td>
                 </tr>
               ) : (
-                ventasFiltradas.map((venta) => (
+                ventasPaginadas.map((venta) => (
                   <tr key={venta.id}>
                     <td>
                       <strong className="sale-folio">
@@ -624,36 +589,23 @@ export function Ventas() {
                       </span>
                     </td>
 
-                    <td>
-                      {venta.clienteNombre ||
-                        "Público general"}
-                    </td>
+                    <td>{venta.clienteNombre || "Público general"}</td>
 
                     <td>
-                      <strong>
-                        {formatearMoneda(venta.total)}
-                      </strong>
+                      <strong>{formatearMoneda(venta.total)}</strong>
                     </td>
 
-                    <td>
-                      {formatearMoneda(
-                        venta.totalPagado,
-                      )}
-                    </td>
+                    <td>{formatearMoneda(venta.totalPagado)}</td>
 
                     <td>
                       <span
                         className={
-                          Number(
-                            venta.saldoPendiente || 0,
-                          ) > 0
+                          Number(venta.saldoPendiente || 0) > 0
                             ? "sale-balance-pending"
                             : ""
                         }
                       >
-                        {formatearMoneda(
-                          venta.saldoPendiente,
-                        )}
+                        {formatearMoneda(venta.saldoPendiente)}
                       </span>
                     </td>
 
@@ -663,12 +615,9 @@ export function Ventas() {
                           venta.estado || "",
                         ).toLowerCase()}`}
                       >
-                        {venta.estado === "PAGADA" && (
-                          <FaCheckCircle />
-                        )}
+                        {venta.estado === "PAGADA" && <FaCheckCircle />}
 
-                        {venta.estado ===
-                          "PENDIENTE" && <FaClock />}
+                        {venta.estado === "PENDIENTE" && <FaClock />}
 
                         {venta.estado || "SIN ESTADO"}
                       </span>
@@ -690,28 +639,91 @@ export function Ventas() {
             </tbody>
           </table>
         </div>
+
+        <div className="sales-pagination">
+          <div className="sales-pagination-info">
+            <span>Mostrar</span>
+
+            <select
+              value={registrosPorPagina}
+              onChange={(e) => setRegistrosPorPagina(Number(e.target.value))}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+
+            <span>registros por página</span>
+          </div>
+
+          <div className="sales-pagination-controls">
+            <span className="sales-pagination-count">
+              {totalRegistros === 0
+                ? "Sin registros"
+                : `${indiceInicio + 1}-${indiceFin} de ${totalRegistros}`}
+            </span>
+
+            <button
+              type="button"
+              disabled={paginaSegura === 1}
+              onClick={() => setPaginaActual(1)}
+              title="Primera página"
+            >
+              «
+            </button>
+
+            <button
+              type="button"
+              disabled={paginaSegura === 1}
+              onClick={() =>
+                setPaginaActual((actual) => Math.max(1, actual - 1))
+              }
+              title="Página anterior"
+            >
+              ‹
+            </button>
+
+            <span className="sales-pagination-current">
+              {paginaSegura} / {totalPaginas}
+            </span>
+
+            <button
+              type="button"
+              disabled={paginaSegura === totalPaginas}
+              onClick={() =>
+                setPaginaActual((actual) => Math.min(totalPaginas, actual + 1))
+              }
+              title="Página siguiente"
+            >
+              ›
+            </button>
+
+            <button
+              type="button"
+              disabled={paginaSegura === totalPaginas}
+              onClick={() => setPaginaActual(totalPaginas)}
+              title="Última página"
+            >
+              »
+            </button>
+          </div>
+        </div>
       </section>
 
       {mostrarDetalle && ventaSeleccionada && (
-        <div
-          className="sales-modal-overlay"
-          onMouseDown={cerrarDetalle}
-        >
+        <div className="sales-modal-overlay" onMouseDown={cerrarDetalle}>
           <div
             className="sales-detail-modal"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="sales-detail-header">
               <div>
-                <span className="sales-eyebrow">
-                  Detalle de venta
-                </span>
+                <span className="sales-eyebrow">Detalle de venta</span>
 
                 <div className="sales-detail-title-row">
                   <h2>
-                    Venta #
-                    {ventaSeleccionada.folio ||
-                      ventaSeleccionada.id}
+                    Venta #{ventaSeleccionada.folio || ventaSeleccionada.id}
                   </h2>
 
                   <span
@@ -719,23 +731,17 @@ export function Ventas() {
                       ventaSeleccionada.estado || "",
                     ).toLowerCase()}`}
                   >
-                    {ventaSeleccionada.estado ===
-                      "PAGADA" && <FaCheckCircle />}
+                    {ventaSeleccionada.estado === "PAGADA" && <FaCheckCircle />}
 
-                    {ventaSeleccionada.estado ===
-                      "PENDIENTE" && <FaClock />}
+                    {ventaSeleccionada.estado === "PENDIENTE" && <FaClock />}
 
                     {ventaSeleccionada.estado}
                   </span>
                 </div>
 
                 <p>
-                  {ventaSeleccionada.clienteNombre ||
-                    "Público general"}{" "}
-                  ·{" "}
-                  {formatearFecha(
-                    ventaSeleccionada.fecha,
-                  )}
+                  {ventaSeleccionada.clienteNombre || "Público general"} ·{" "}
+                  {formatearFecha(ventaSeleccionada.fecha)}
                 </p>
               </div>
 
@@ -750,57 +756,47 @@ export function Ventas() {
 
             <div className="sales-detail-body">
               <section className="sales-detail-summary">
-                <article>
+                {/*<article>
                   <span>Subtotal</span>
-                  <strong>
-                    {formatearMoneda(
-                      ventaSeleccionada.subtotal,
-                    )}
-                  </strong>
+                  <strong>{formatearMoneda(ventaSeleccionada.subtotal)}</strong>
                 </article>
 
                 <article>
                   <span>IVA</span>
-                  <strong>
-                    {formatearMoneda(
-                      ventaSeleccionada.iva,
-                    )}
-                  </strong>
-                </article>
+                  <strong>{formatearMoneda(ventaSeleccionada.iva)}</strong>
+                </article>*/}
 
                 <article className="total">
                   <span>Total</span>
-                  <strong>
-                    {formatearMoneda(
-                      ventaSeleccionada.total,
-                    )}
-                  </strong>
+                  <strong>{formatearMoneda(ventaSeleccionada.total)}</strong>
                 </article>
 
+                {Number(ventaSeleccionada.anticipoAplicado || 0) > 0 && (
+                  <article>
+                    <span>Anticipo Taller</span>
+                    <strong>
+                      {formatearMoneda(ventaSeleccionada.anticipoAplicado)}
+                    </strong>
+                  </article>
+                )}
+
                 <article>
-                  <span>Pagado</span>
+                  <span>Pagado en POS</span>
                   <strong>
-                    {formatearMoneda(
-                      ventaSeleccionada.totalPagado,
-                    )}
+                    {formatearMoneda(ventaSeleccionada.totalPagado)}
                   </strong>
                 </article>
 
                 <article
                   className={
-                    Number(
-                      ventaSeleccionada.saldoPendiente ||
-                        0,
-                    ) > 0
+                    Number(ventaSeleccionada.saldoPendiente || 0) > 0
                       ? "pending"
                       : ""
                   }
                 >
                   <span>Saldo pendiente</span>
                   <strong>
-                    {formatearMoneda(
-                      ventaSeleccionada.saldoPendiente,
-                    )}
+                    {formatearMoneda(ventaSeleccionada.saldoPendiente)}
                   </strong>
                 </article>
               </section>
@@ -809,142 +805,113 @@ export function Ventas() {
                 <div className="sales-section-heading">
                   <div>
                     <h3>Conceptos</h3>
-                    <p>
-                      Productos y servicios incluidos en la
-                      venta.
-                    </p>
+                    <p>Productos y servicios incluidos en la venta.</p>
                   </div>
                 </div>
 
                 {ventaSeleccionada.items?.length > 0 ? (
                   <div className="sales-items-list">
-                    {ventaSeleccionada.items.map(
-                      (item, index) => {
-                        const precio =
-                          obtenerPrecioItem(item);
+                    {ventaSeleccionada.items.map((item, index) => {
+                      const precio = obtenerPrecioItem(item);
 
-                        const subtotalItem = Number(
-                          item.subtotal ??
-                            Number(item.cantidad || 0) *
-                              precio,
-                        );
+                      const subtotalItem = Number(
+                        item.subtotal ?? Number(item.cantidad || 0) * precio,
+                      );
 
-                        return (
-                          <div
-                            className="sales-item"
-                            key={item.id || index}
-                          >
-                            <div className="sales-item-main">
-                              <span
-                                className={`sales-item-type ${String(
-                                  item.tipo || "PRODUCTO",
-                                ).toLowerCase()}`}
-                              >
-                                {item.tipo ||
-                                  "PRODUCTO"}
-                              </span>
+                      return (
+                        <div className="sales-item" key={item.id || index}>
+                          <div className="sales-item-main">
+                            <span
+                              className={`sales-item-type ${String(
+                                item.tipo || "PRODUCTO",
+                              ).toLowerCase()}`}
+                            >
+                              {item.tipo || "PRODUCTO"}
+                            </span>
 
-                              <div>
-                                <strong>
-                                  {obtenerNombreItem(
-                                    item,
-                                  )}
-                                </strong>
+                            <div>
+                              <strong>{obtenerNombreItem(item)}</strong>
 
-                                <small>
-                                  {item.codigo ||
-                                    item.productoCodigo ||
-                                    item.servicioCodigo ||
-                                    "Sin código"}
-                                </small>
-                              </div>
-                            </div>
-
-                            <div className="sales-item-price">
-                              <span>
-                                {Number(
-                                  item.cantidad || 0,
-                                )}{" "}
-                                ×{" "}
-                                {formatearMoneda(
-                                  precio,
-                                )}
-                              </span>
-
-                              <strong>
-                                {formatearMoneda(
-                                  subtotalItem,
-                                )}
-                              </strong>
+                              <small>
+                                {item.codigo ||
+                                  item.productoCodigo ||
+                                  item.servicioCodigo ||
+                                  "Sin código"}
+                              </small>
                             </div>
                           </div>
-                        );
-                      },
-                    )}
+
+                          <div className="sales-item-price">
+                            <span>
+                              {Number(item.cantidad || 0)} ×{" "}
+                              {formatearMoneda(precio)}
+                            </span>
+
+                            <strong>{formatearMoneda(subtotalItem)}</strong>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="sales-empty-section">
-                    Esta respuesta no contiene el detalle de
-                    productos o servicios.
+                    Esta respuesta no contiene el detalle de productos o
+                    servicios.
                   </div>
                 )}
               </section>
 
-              {ventaSeleccionada.estado ===
-                "PAGADA" && (
+              {(ventaSeleccionada.pagos?.length ?? 0) > 0 && (
                 <section className="sales-detail-section">
                   <div className="sales-section-heading">
                     <div>
                       <h3>Pagos registrados</h3>
-                      <p>
-                        Formas de pago aplicadas a la venta.
-                      </p>
+                      <p>Formas de pago aplicadas a la venta.</p>
                     </div>
                   </div>
 
+                  {Number(ventaSeleccionada.anticipoAplicado || 0) > 0 && (
+                    <div className="sales-advance-payment">
+                      <div className="sales-advance-payment__info">
+                        <strong>Anticipo de Taller</strong>
+                        <small>Pago recibido al registrar la orden</small>
+                      </div>
+
+                      <strong>
+                        {formatearMoneda(ventaSeleccionada.anticipoAplicado)}
+                      </strong>
+                    </div>
+                  )}
+
                   {ventaSeleccionada.pagos?.length > 0 ? (
                     <div className="sales-payment-history">
-                      {ventaSeleccionada.pagos.map(
-                        (pago, index) => (
-                          <div
-                            key={pago.id || index}
-                          >
-                            <span>
-                              <FaCreditCard />
-                              {pago.metodo ||
-                                pago.metodoPago ||
-                                "Sin método"}
-                            </span>
+                      {ventaSeleccionada.pagos.map((pago, index) => (
+                        <div key={pago.id || index}>
+                          <span>
+                            <FaCreditCard />
+                            {pago.metodo || pago.metodoPago || "Sin método"}
+                          </span>
 
-                            <strong>
-                              {formatearMoneda(
-                                pago.monto,
-                              )}
-                            </strong>
-                          </div>
-                        ),
-                      )}
+                          <strong>{formatearMoneda(pago.monto)}</strong>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="sales-empty-section">
-                      No se recibieron pagos en la respuesta
-                      de esta venta.
+                      No se recibieron pagos en la respuesta de esta venta.
                     </div>
                   )}
                 </section>
               )}
 
-              {ventaSeleccionada.estado ===
-                "PENDIENTE" && (
+              {ventaSeleccionada.estado === "PENDIENTE" && (
                 <section className="sales-detail-section payment-box">
                   <div className="sales-section-heading">
                     <div>
                       <h3>Registrar pago</h3>
                       <p>
                         Saldo actual:{" "}
-                        <strong>
-                          {formatearMoneda(saldoActual)}
-                        </strong>
+                        <strong>{formatearMoneda(saldoActual)}</strong>
                       </p>
                     </div>
 
@@ -960,29 +927,16 @@ export function Ventas() {
 
                   <div className="sales-payment-rows">
                     {pagos.map((pago, index) => (
-                      <div
-                        className="sales-payment-row"
-                        key={index}
-                      >
+                      <div className="sales-payment-row" key={index}>
                         <select
                           value={pago.metodo}
                           onChange={(e) =>
-                            actualizarPago(
-                              index,
-                              "metodo",
-                              e.target.value,
-                            )
+                            actualizarPago(index, "metodo", e.target.value)
                           }
                         >
-                          <option value="EFECTIVO">
-                            Efectivo
-                          </option>
-                          <option value="TARJETA">
-                            Tarjeta
-                          </option>
-                          <option value="TRANSFERENCIA">
-                            Transferencia
-                          </option>
+                          <option value="EFECTIVO">Efectivo</option>
+                          <option value="TARJETA">Tarjeta</option>
+                          <option value="TRANSFERENCIA">Transferencia</option>
                         </select>
 
                         <div className="sales-money-input">
@@ -993,11 +947,7 @@ export function Ventas() {
                             step="0.01"
                             value={pago.monto}
                             onChange={(e) =>
-                              actualizarPago(
-                                index,
-                                "monto",
-                                e.target.value,
-                              )
+                              actualizarPago(index, "monto", e.target.value)
                             }
                           />
                         </div>
@@ -1005,12 +955,8 @@ export function Ventas() {
                         <button
                           type="button"
                           className="sales-payment-delete"
-                          disabled={
-                            pagos.length === 1
-                          }
-                          onClick={() =>
-                            eliminarMetodoPago(index)
-                          }
+                          disabled={pagos.length === 1}
+                          onClick={() => eliminarMetodoPago(index)}
                         >
                           <FaTrash />
                         </button>
@@ -1021,28 +967,18 @@ export function Ventas() {
                   <div className="sales-payment-result">
                     <div>
                       <span>Nuevo pago</span>
-                      <strong>
-                        {formatearMoneda(nuevoPago)}
-                      </strong>
+                      <strong>{formatearMoneda(nuevoPago)}</strong>
                     </div>
 
                     {nuevoSaldoPendiente > 0 ? (
                       <div className="pending">
-                        <span>
-                          Saldo después del pago
-                        </span>
-                        <strong>
-                          {formatearMoneda(
-                            nuevoSaldoPendiente,
-                          )}
-                        </strong>
+                        <span>Saldo después del pago</span>
+                        <strong>{formatearMoneda(nuevoSaldoPendiente)}</strong>
                       </div>
                     ) : (
                       <div className="change">
                         <span>Cambio</span>
-                        <strong>
-                          {formatearMoneda(cambio)}
-                        </strong>
+                        <strong>{formatearMoneda(cambio)}</strong>
                       </div>
                     )}
                   </div>
@@ -1068,20 +1004,15 @@ export function Ventas() {
                 Imprimir ticket
               </button>
 
-              {ventaSeleccionada.estado ===
-                "PENDIENTE" && (
+              {ventaSeleccionada.estado === "PENDIENTE" && (
                 <button
                   type="button"
                   className="sales-btn primary"
                   onClick={cobrarVenta}
-                  disabled={
-                    procesandoCobro || nuevoPago <= 0
-                  }
+                  disabled={procesandoCobro || nuevoPago <= 0}
                 >
                   <FaMoneyBillWave />
-                  {procesandoCobro
-                    ? "Procesando..."
-                    : "Registrar cobro"}
+                  {procesandoCobro ? "Procesando..." : "Registrar cobro"}
                 </button>
               )}
             </div>
@@ -1091,15 +1022,31 @@ export function Ventas() {
 
       {mostrarTicket && ventaSeleccionada && (
         <TicketModal
-          ticket={construirTicket(
-            ventaSeleccionada,
-          )}
+          ticket={construirTicket(ventaSeleccionada)}
           onClose={() => setMostrarTicket(false)}
-          onNuevaVenta={() =>
-            setMostrarTicket(false)
-          }
+          onNuevaVenta={() => setMostrarTicket(false)}
         />
       )}
+
+      {mensajeCobro && (
+        <div className="sales-toast" role="status">
+          <FaCheckCircle className="sales-toast-icon" />
+
+          <div className="sales-toast-content">
+            <strong>{mensajeCobro}</strong>
+            <span>El saldo de la venta se actualizó correctamente.</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMensajeCobro("")}
+            aria-label="Cerrar notificación"
+          >
+            <FaTimes />
+          </button>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -1,19 +1,8 @@
-import {
-  FaCashRegister,
-  FaPlus,
-  FaTrash,
-  FaTimes,
-} from "react-icons/fa";
+import { FaCashRegister, FaPlus, FaTrash, FaTimes } from "react-icons/fa";
 
-export default function CobroModal({
-  venta,
-  onClose,
-  onConfirmar,
-}) {
+export default function CobroModal({ venta, onClose, onConfirmar }) {
   const aplicarEfectivo = (monto) => {
-    const index = venta.pagos.findIndex(
-      (pago) => pago.metodo === "EFECTIVO",
-    );
+    const index = venta.pagos.findIndex((pago) => pago.metodo === "EFECTIVO");
 
     if (index >= 0) {
       venta.actualizarPago(index, "monto", monto);
@@ -24,16 +13,12 @@ export default function CobroModal({
   };
 
   const siguienteBillete = () => {
-    const total = Math.ceil(venta.total);
+    const total = Math.ceil(venta.totalPorCobrar);
 
-    const denominaciones = [
-      20, 50, 100, 200, 500, 1000, 2000,
-    ];
+    const denominaciones = [20, 50, 100, 200, 500, 1000, 2000];
 
     return (
-      denominaciones.find(
-        (denominacion) => denominacion >= total,
-      ) || total
+      denominaciones.find((denominacion) => denominacion >= total) || total
     );
   };
 
@@ -45,30 +30,43 @@ export default function CobroModal({
       >
         <div className="pos-modal-header">
           <div>
-            <span className="modal-eyebrow">
-              Finalizar venta
-            </span>
+            <span className="modal-eyebrow">Finalizar venta</span>
             <h2>Cobrar venta</h2>
           </div>
 
-          <button
-            className="modal-close"
-            type="button"
-            onClick={onClose}
-          >
+          <button className="modal-close" type="button" onClick={onClose}>
             <FaTimes />
           </button>
         </div>
 
         <div className="payment-total-banner">
           <span>Total a cobrar</span>
-          <strong>${venta.total.toFixed(2)}</strong>
+          <strong>${venta.totalPorCobrar.toFixed(2)}</strong>
         </div>
+
+        {venta.ordenSeleccionada && (
+          <div className="payment-order-summary">
+            <div>
+              <span>Total de la orden</span>
+              <strong>${venta.total.toFixed(2)}</strong>
+            </div>
+
+            <div>
+              <span>Anticipo recibido</span>
+              <strong>-${venta.anticipoAplicado.toFixed(2)}</strong>
+            </div>
+
+            <div className="payment-order-summary__remaining">
+              <span>Restante por cobrar</span>
+              <strong>${venta.totalPorCobrar.toFixed(2)}</strong>
+            </div>
+          </div>
+        )}
 
         <div className="payment-quick-actions">
           <button
             type="button"
-            onClick={() => aplicarEfectivo(venta.total)}
+            onClick={() => aplicarEfectivo(venta.totalPorCobrar)}
           >
             Exacto
           </button>
@@ -85,9 +83,7 @@ export default function CobroModal({
 
           <button
             type="button"
-            onClick={() =>
-              aplicarEfectivo(siguienteBillete())
-            }
+            onClick={() => aplicarEfectivo(siguienteBillete())}
           >
             Billete
           </button>
@@ -113,18 +109,12 @@ export default function CobroModal({
                 <select
                   value={pago.metodo}
                   onChange={(e) =>
-                    venta.actualizarPago(
-                      index,
-                      "metodo",
-                      e.target.value,
-                    )
+                    venta.actualizarPago(index, "metodo", e.target.value)
                   }
                 >
                   <option value="EFECTIVO">Efectivo</option>
                   <option value="TARJETA">Tarjeta</option>
-                  <option value="TRANSFERENCIA">
-                    Transferencia
-                  </option>
+                  <option value="TRANSFERENCIA">Transferencia</option>
                 </select>
 
                 <div className="money-input">
@@ -135,11 +125,7 @@ export default function CobroModal({
                     step="0.01"
                     value={pago.monto}
                     onChange={(e) =>
-                      venta.actualizarPago(
-                        index,
-                        "monto",
-                        e.target.value,
-                      )
+                      venta.actualizarPago(index, "monto", e.target.value)
                     }
                   />
                 </div>
@@ -148,9 +134,7 @@ export default function CobroModal({
                   type="button"
                   className="payment-delete"
                   disabled={venta.pagos.length === 1}
-                  onClick={() =>
-                    venta.eliminarMetodoPago(index)
-                  }
+                  onClick={() => venta.eliminarMetodoPago(index)}
                 >
                   <FaTrash />
                 </button>
@@ -164,11 +148,9 @@ export default function CobroModal({
           <select
             value={venta.clienteId}
             disabled={Boolean(venta.ordenSeleccionada)}
-            onChange={(e) =>
-              venta.setClienteId(e.target.value)
-            }
+            onChange={(e) => venta.setClienteId(e.target.value)}
           >
-            <option value="">Público general</option>
+            <option value="1">Seleccione cliente</option>
 
             {venta.clientes.map((cliente) => (
               <option key={cliente.id} value={cliente.id}>
@@ -181,17 +163,13 @@ export default function CobroModal({
         <div className="payment-result-grid">
           <div>
             <span>Total pagado</span>
-            <strong>
-              ${venta.totalPagado.toFixed(2)}
-            </strong>
+            <strong>${venta.totalPagado.toFixed(2)}</strong>
           </div>
 
           {venta.saldoPendiente > 0 ? (
             <div className="pending">
               <span>Saldo pendiente</span>
-              <strong>
-                ${venta.saldoPendiente.toFixed(2)}
-              </strong>
+              <strong>${venta.saldoPendiente.toFixed(2)}</strong>
             </div>
           ) : (
             <div className="change">
@@ -201,11 +179,7 @@ export default function CobroModal({
           )}
         </div>
 
-        {venta.error && (
-          <div className="pos-inline-error">
-            {venta.error}
-          </div>
-        )}
+        {venta.error && <div className="pos-inline-error">{venta.error}</div>}
 
         <div className="pos-modal-footer">
           <button
@@ -224,9 +198,7 @@ export default function CobroModal({
             disabled={venta.procesandoVenta}
           >
             <FaCashRegister />
-            {venta.procesandoVenta
-              ? "Procesando..."
-              : "Confirmar cobro"}
+            {venta.procesandoVenta ? "Procesando..." : "Confirmar cobro"}
           </button>
         </div>
       </div>

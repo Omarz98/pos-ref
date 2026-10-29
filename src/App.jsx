@@ -44,6 +44,24 @@ import Motocicletas from "./pages/Motocicletas/Motocicletas";
 import MotoForm from "./pages/Motocicletas/MotoForm";
 import MotoDetalle from "./pages/Motocicletas/MotoDetalle";
 
+function RedireccionInicio() {
+  const usuario = JSON.parse(
+    localStorage.getItem("usuario") || "null"
+  );
+
+  const permisos = usuario?.permisos || [];
+
+  if (permisos.includes("VENTA_CREAR")) {
+    return <Navigate to="/pos" replace />;
+  }
+
+  if (permisos.includes("TALLER_DASHBOARD_VER")) {
+    return <Navigate to="/taller" replace />;
+  }
+
+  return <Navigate to="/sin-permiso" replace />;
+}
+
 function App() {
   const [theme, setTheme] = useState("light");
   const cambiarTema = () => {
@@ -64,7 +82,7 @@ function App() {
           <Route
             element={<MainLayout theme={theme} cambiarTema={cambiarTema} />}
           >
-            <Route index element={<Navigate to="/pos" replace />} />
+            <Route index element={<RedireccionInicio />} />
 
             <Route
               element={
