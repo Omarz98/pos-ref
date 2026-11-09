@@ -1,0 +1,125 @@
+
+name: POSREF - Deploy Frontend
+
+# Despliegue manual desde GitHub Actions
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Evitar despliegues simultaneos
+concurrency:
+  group: posref-frontend-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Compilar y desplegar React
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Obtener codigo del repositorio
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+
+      # 2. Configurar Node.js
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # 3. Instalar dependencias
+      - name: Instalar dependencias
+        run: npm ci
+
+      # 4. Compilar React con Vite
+      - name: Compilar frontend
+        run: npm run build
+
+      # 5. Verificar que se genero dist
+      - name: Verificar compilacion
+        run: |
+          if [ ! -s dist/index.html ]; then
+            echo "ERROR: No se genero dist/index.html"
+            exit 1
+          fi
+
+          echo "Frontend compilado correctamente"
+          ls -lah dist/
+
+      # 6. Configurar SSH con secretos
+      - name: Configurar SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+          chmod 600 ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/known_hosts
+
+          echo "SSH configurado correctamente"
+
+      # 7. Verificar conexion con Oracle
+      - name: Verificar conexion SSH
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=15 \
+            "$USER@$HOST" \
+            "echo 'Conexion SSH con Oracle exitosa'"
+
+      # 8. Transferir archivos compilados
+      - name: Transferir frontend a Oracle
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+        run: |
+          echo "Transfiriendo archivos React..."
+
+          rsync -az --delete \
+            -e "ssh -o BatchMode=yes -o StrictHostKeyChecking=yes" \
+            dist/ \
+            "$USER@$HOST:/opt/posref/deploy/frontend/incoming/"
+
+          echo "Transferencia completada"
+
+      # 9. Ejecutar script de despliegue
+      - name: Publicar frontend
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+        run: |
+          echo "Iniciando publicacion POSREF..."
+
+          ssh \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$USER@$HOST" \
+            "/opt/posref/deploy/frontend/deploy.sh"
+
+          echo "Publicacion finalizada"
+
+      # 10. Confirmar despliegue
+      - name: Verificar frontend en Oracle
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$USER@$HOST" \
+            "test -s /opt/posref/frontend/dist/index.html && \
+             docker inspect -f '{{.State.Running}}' posref-nginx | grep -qx true && \
+             echo 'POSREF frontend desplegado correctamente'"
