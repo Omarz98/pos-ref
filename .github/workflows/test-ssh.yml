@@ -26,6 +26,26 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/known_hosts
 
+      
+      - name: Validar configuracion SSH
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          echo "Verificando archivo known_hosts..."
+
+          test -s ~/.ssh/known_hosts || {
+            echo "ERROR: known_hosts esta vacio"
+            exit 1
+          }
+
+          ssh-keygen -F "$HOST" \
+            -f ~/.ssh/known_hosts >/dev/null || {
+              echo "ERROR: No existe una clave para VPS_HOST"
+              exit 1
+            }
+
+          echo "La clave del servidor esta registrada."
+
       - name: Probar conexion Oracle Cloud
         env:
           HOST: ${{ secrets.VPS_HOST }}
