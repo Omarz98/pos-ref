@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../../services/api";
 
+import { useAuth } from "../../../auth/AuthContext";
+
+import {
+  guardarCarrito,
+  recuperarCarrito,
+  eliminarCarrito,
+} from "../../../services/carritoStorage";
+
 const pagoInicial = () => ({
   metodo: "EFECTIVO",
   monto: 0,
@@ -23,6 +31,63 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
   const [procesandoVenta, setProcesandoVenta] = useState(false);
   const [error, setError] = useState("");
 
+  const { usuario } = useAuth();
+  // Identifica a qué usuario pertenece el
+  // borrador que está actualmente cargado.
+  const [usuarioCarritoCargado, setUsuarioCarritoCargado] = useState(null);
+
+  // Identificador del borrador.
+  // Cambia cuando se inicia una venta nueva.
+  const [versionBorrador, setVersionBorrador] = useState(0);
+
+  useEffect(() => {
+    if (usuario?.id == null) {
+      setUsuarioCarritoCargado(null);
+      setCarrito([]);
+      setClienteId("");
+      setOrdenSeleccionada(null);
+      setPagos([pagoInicial()]);
+      return;
+    }
+
+    const datos = recuperarCarrito(usuario.id);
+
+    setCarrito(Array.isArray(datos?.carrito) ? datos.carrito : []);
+
+    setClienteId(datos?.clienteId ?? "");
+
+    setOrdenSeleccionada(datos?.ordenSeleccionada ?? null);
+
+    // No restaurar pagos anteriores.
+    setPagos([pagoInicial()]);
+
+    setUsuarioCarritoCargado(String(usuario.id));
+  }, [usuario?.id]);
+
+  useEffect(() => {
+    if (usuario?.id == null) return;
+
+    // No guardar hasta recuperar el carrito
+    // correspondiente a este usuario.
+    if (usuarioCarritoCargado !== String(usuario.id)) {
+      return;
+    }
+
+    guardarCarrito(usuario.id, {
+      carrito,
+      clienteId,
+      ordenSeleccionada,
+      versionBorrador,
+    });
+  }, [
+    usuario?.id,
+    usuarioCarritoCargado,
+    carrito,
+    clienteId,
+    ordenSeleccionada,
+    versionBorrador,
+  ]);
+
   const cargarCatalogos = async () => {
     setCargandoCatalogos(true);
     setError("");
@@ -41,21 +106,15 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
       ]);
 
       setClientes(
-        (clientesResponse.data ?? []).filter(
-          (item) => item.activo !== false,
-        ),
+        (clientesResponse.data ?? []).filter((item) => item.activo !== false),
       );
 
       setServicios(
-        (serviciosResponse.data ?? []).filter(
-          (item) => item.activo !== false,
-        ),
+        (serviciosResponse.data ?? []).filter((item) => item.activo !== false),
       );
 
       setProductos(
-        (productosResponse.data ?? []).filter(
-          (item) => item.activo !== false,
-        ),
+        (productosResponse.data ?? []).filter((item) => item.activo !== false),
       );
 
       setOrdenes(ordenesPendientesResponse.data ?? []);
@@ -102,19 +161,15 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
         ...orden,
         tipo: "ORDEN",
         codigo: orden.folio || orden.numeroOrden || `ORD-${orden.id}`,
-        nombre: `Orden ${orden.folio || orden.numeroOrden || orden.id} - ${
-          orden.clienteNombre || "Cliente"
-        }`,
-        precioVenta: Number(
-          orden.saldoPendiente != null
-            ? orden.saldoPendiente
-            : orden.total || 0,
-        ),
-        precioMostrar: Number(
-          orden.saldoPendiente != null
-            ? orden.saldoPendiente
-            : orden.total || 0,
-        ),
+
+        nombre: `Orden ${
+          orden.folio || orden.numeroOrden || orden.id
+        } - ${orden.clienteNombre || "Cliente"}`,
+
+        precioVenta: Number(orden.total || 0),
+        precioMostrar: Number(orden.saldoPendiente ?? orden.total ?? 0),
+
+        anticipo: Number(orden.anticipo || 0),
         stockActual: null,
         activo: true,
       })),
@@ -128,10 +183,7 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
     return elementosPOS.filter((elemento) => {
       if (elemento.activo === false) return false;
 
-      if (
-        filtroTipo !== "TODOS" &&
-        elemento.tipo !== filtroTipo
-      ) {
+      if (filtroTipo !== "TODOS" && elemento.tipo !== filtroTipo) {
         return false;
       }
 
@@ -160,28 +212,19 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
 
     setCarrito((actual) => {
       const indice = actual.findIndex(
-        (item) =>
-          item.productoId === producto.id &&
-          item.tipo === "PRODUCTO",
+        (item) => item.productoId === producto.id && item.tipo === "PRODUCTO",
       );
 
       if (indice >= 0) {
         const existente = actual[indice];
 
-        if (
-          existente.cantidad >=
-          Number(producto.stockActual || 0)
-        ) {
-          setError(
-            `Solo hay ${producto.stockActual} unidades disponibles`,
-          );
+        if (existente.cantidad >= Number(producto.stockActual || 0)) {
+          setError(`Solo hay ${producto.stockActual} unidades disponibles`);
           return actual;
         }
 
         return actual.map((item, i) =>
-          i === indice
-            ? { ...item, cantidad: item.cantidad + 1 }
-            : item,
+          i === indice ? { ...item, cantidad: item.cantidad + 1 } : item,
         );
       }
 
@@ -215,9 +258,7 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
 
       if (indice >= 0) {
         return actual.map((item, i) =>
-          i === indice
-            ? { ...item, cantidad: item.cantidad + 1 }
-            : item,
+          i === indice ? { ...item, cantidad: item.cantidad + 1 } : item,
         );
       }
 
@@ -247,10 +288,7 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
       ? orden.productos
       : [];
 
-    if (
-      serviciosOrden.length === 0 &&
-      productosOrden.length === 0
-    ) {
+    if (serviciosOrden.length === 0 && productosOrden.length === 0) {
       setError("La orden no contiene productos o servicios");
       return;
     }
@@ -271,13 +309,9 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
       codigo: servicio.codigo ?? "",
       tipo: "SERVICIO",
       nombre:
-        servicio.nombre ??
-        servicio.servicioNombre ??
-        "Servicio sin nombre",
+        servicio.nombre ?? servicio.servicioNombre ?? "Servicio sin nombre",
       cantidad: Number(servicio.cantidad ?? 1),
-      precio: Number(
-        servicio.precioUnitario ?? servicio.precio ?? 0,
-      ),
+      precio: Number(servicio.precioUnitario ?? servicio.precio ?? 0),
       origenOrden: true,
     }));
 
@@ -289,13 +323,9 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
       codigo: producto.codigo ?? "",
       tipo: "PRODUCTO",
       nombre:
-        producto.nombre ??
-        producto.productoNombre ??
-        "Producto sin nombre",
+        producto.nombre ?? producto.productoNombre ?? "Producto sin nombre",
       cantidad: Number(producto.cantidad ?? 1),
-      precio: Number(
-        producto.precioUnitario ?? producto.precio ?? 0,
-      ),
+      precio: Number(producto.precioUnitario ?? producto.precio ?? 0),
       origenOrden: true,
     }));
 
@@ -303,12 +333,17 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
     setOrdenSeleccionada(orden);
     setClienteId(String(orden.clienteId ?? ""));
 
+    const anticipo = Number(orden.anticipo ?? 0);
+
+    const saldoOrden = Math.max(
+      Number(orden.saldoPendiente ?? Number(orden.total ?? 0) - anticipo),
+      0,
+    );
+
     setPagos([
       {
         metodo: "EFECTIVO",
-        monto: Number(
-          orden.saldoPendiente ?? 0,
-        ),
+        monto: Number(saldoOrden.toFixed(2)),
       },
     ]);
 
@@ -336,17 +371,10 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
     if (ordenSeleccionada) return;
 
     if (itemCarrito.tipo === "PRODUCTO") {
-      const producto = productos.find(
-        (p) => p.id === itemCarrito.productoId,
-      );
+      const producto = productos.find((p) => p.id === itemCarrito.productoId);
 
-      if (
-        producto &&
-        itemCarrito.cantidad >= Number(producto.stockActual)
-      ) {
-        setError(
-          `Solo hay ${producto.stockActual} piezas disponibles`,
-        );
+      if (producto && itemCarrito.cantidad >= Number(producto.stockActual)) {
+        setError(`Solo hay ${producto.stockActual} piezas disponibles`);
         return;
       }
     }
@@ -380,9 +408,7 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
   const eliminarDelCarrito = (id) => {
     if (ordenSeleccionada) return;
 
-    setCarrito((actual) =>
-      actual.filter((item) => item.id !== id),
-    );
+    setCarrito((actual) => actual.filter((item) => item.id !== id));
   };
 
   const quitarOrden = () => {
@@ -400,13 +426,19 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
     setOrdenSeleccionada(null);
     setPagos([pagoInicial()]);
     setError("");
+
+    setVersionBorrador((actual) => actual + 1);
+
+    // Se elimina el borrador anterior.
+    if (usuario?.id != null) {
+      eliminarCarrito(usuario.id);
+    }
   };
 
   const total = useMemo(
     () =>
       carrito.reduce(
-        (acc, item) =>
-          acc + Number(item.cantidad) * Number(item.precio),
+        (acc, item) => acc + Number(item.cantidad) * Number(item.precio),
         0,
       ),
     [carrito],
@@ -415,27 +447,30 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
   const subtotal = total / 1.16;
   const iva = total - subtotal;
 
+  const anticipoAplicado = useMemo(() => {
+    if (!ordenSeleccionada) return 0;
+
+    const anticipo = Number(ordenSeleccionada.anticipo ?? 0);
+
+    return Math.min(Math.max(anticipo, 0), total);
+  }, [ordenSeleccionada, total]);
+
+  const totalPorCobrar = Math.max(total - anticipoAplicado, 0);
+
   const totalPagado = useMemo(
-    () =>
-      pagos.reduce(
-        (acc, pago) => acc + Number(pago.monto || 0),
-        0,
-      ),
+    () => pagos.reduce((acc, pago) => acc + Number(pago.monto || 0), 0),
     [pagos],
   );
 
-  const saldoPendiente = total - totalPagado;
+  const saldoPendiente = Math.max(totalPorCobrar - totalPagado, 0);
 
   const efectivoPagado = pagos
     .filter((pago) => pago.metodo === "EFECTIVO")
-    .reduce(
-      (acc, pago) => acc + Number(pago.monto || 0),
-      0,
-    );
+    .reduce((acc, pago) => acc + Number(pago.monto || 0), 0);
 
   const cambio =
-    saldoPendiente < 0 && efectivoPagado > 0
-      ? Math.abs(saldoPendiente)
+    efectivoPagado > 0
+      ? Math.min(efectivoPagado, Math.max(totalPagado - totalPorCobrar, 0))
       : 0;
 
   const actualizarPago = (index, campo, valor) => {
@@ -444,8 +479,7 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
         i === index
           ? {
               ...pago,
-              [campo]:
-                campo === "monto" ? Number(valor || 0) : valor,
+              [campo]: campo === "monto" ? Number(valor || 0) : valor,
             }
           : pago,
       ),
@@ -459,173 +493,92 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
   const eliminarMetodoPago = (index) => {
     if (pagos.length === 1) return;
 
-    setPagos((actual) =>
-      actual.filter((_, i) => i !== index),
-    );
+    setPagos((actual) => actual.filter((_, i) => i !== index));
   };
 
   const cobrarVenta = async () => {
-  setError("");
+    setError("");
 
-  if (!caja || caja.estado === "CERRADA") {
-    setError("Debes abrir la caja antes de registrar ventas");
-    return false;
-  }
+    if (!caja || caja.estado === "CERRADA") {
+      setError("Debes abrir la caja antes de registrar ventas");
+      return false;
+    }
 
-  if (carrito.length === 0) {
-    setError("Agrega productos o servicios a la venta");
-    return false;
-  }
+    if (carrito.length === 0) {
+      setError("Agrega productos o servicios a la venta");
+      return false;
+    }
 
-  if (pagos.some((pago) => Number(pago.monto) < 0)) {
-    setError("Los montos de pago no pueden ser negativos");
-    return false;
-  }
+    if (pagos.some((pago) => Number(pago.monto) < 0)) {
+      setError("Los montos de pago no pueden ser negativos");
+      return false;
+    }
 
-  const pagosValidos = pagos.filter(
-    (pago) => Number(pago.monto || 0) > 0,
-  );
+    const pagosValidos = pagos.filter((pago) => Number(pago.monto || 0) > 0);
 
-  if (pagosValidos.length === 0) {
-    setError("Captura al menos un pago mayor a cero");
-    return false;
-  }
-
-  /*
-   * El cajero puede capturar:
-   *
-   * Total:    $18
-   * Efectivo: $20
-   *
-   * El ticket debe mostrar recibido $20 y cambio $2,
-   * pero al backend solamente se aplican $18.
-   */
-  let exceso = Math.max(totalPagado - total, 0);
-
-  const pagosNormalizados = pagosValidos
-    .map((pago) => {
-      let monto = Number(pago.monto || 0);
-
-      if (exceso > 0 && pago.metodo === "EFECTIVO") {
-        const descuento = Math.min(monto, exceso);
-
-        monto -= descuento;
-        exceso -= descuento;
-      }
-
-      return {
-        metodo: pago.metodo,
-        monto: Number(monto.toFixed(2)),
-      };
-    })
-    .filter((pago) => pago.monto > 0);
-
-  const totalAplicado = pagosNormalizados.reduce(
-    (acc, pago) => acc + Number(pago.monto),
-    0,
-  );
-
-  const saldoAplicado = Math.max(
-    total - totalAplicado,
-    0,
-  );
-
-  const ventaRequest = {
-    ordenServicioId: ordenSeleccionada?.id || null,
-
-    clienteId: clienteId ? Number(clienteId) : null,
-
-    items: carrito.map((item) => ({
-      productoId:
-        item.productoId != null
-          ? Number(item.productoId)
-          : null,
-
-      servicioId:
-        item.servicioId != null
-          ? Number(item.servicioId)
-          : null,
-
-      detalleOrdenId:
-        item.detalleOrdenId != null
-          ? Number(item.detalleOrdenId)
-          : null,
-
-      codigo: item.codigo || item.id,
-      tipo: item.tipo,
-      nombre: item.nombre,
-      cantidad: Number(item.cantidad),
-      precio: Number(item.precio),
-    })),
-
-    subtotal: Number(subtotal.toFixed(2)),
-    iva: Number(iva.toFixed(2)),
-    total: Number(total.toFixed(2)),
-
-    pagos: pagosNormalizados,
-
-    totalPagado: Number(totalAplicado.toFixed(2)),
-    saldoPendiente: Number(saldoAplicado.toFixed(2)),
-
-    estado:
-      saldoAplicado <= 0 ? "PAGADA" : "PENDIENTE",
-  };
-
-  setProcesandoVenta(true);
-
-  try {
-    const response = await api.post(
-      "/ventas",
-      ventaRequest,
-    );
-
-    const ventaGuardada = response.data;
+    if (pagosValidos.length === 0) {
+      setError("Captura al menos un pago mayor a cero");
+      return false;
+    }
 
     /*
-     * IMPORTANTE:
-     * Creamos el ticket ANTES de ejecutar nuevaVenta(),
-     * porque nuevaVenta() vacía carrito, cliente y pagos.
+     * El cajero puede capturar:
+     *
+     * Total:    $18
+     * Efectivo: $20
+     *
+     * El ticket debe mostrar recibido $20 y cambio $2,
+     * pero al backend solamente se aplican $18.
      */
-    const clienteSeleccionado = clientes.find(
-      (cliente) =>
-        String(cliente.id) === String(clienteId),
+    let exceso = Math.max(totalPagado - totalPorCobrar, 0);
+
+    const pagosNormalizados = pagosValidos
+      .map((pago) => {
+        let monto = Number(pago.monto || 0);
+
+        if (exceso > 0 && pago.metodo === "EFECTIVO") {
+          const descuento = Math.min(monto, exceso);
+
+          monto -= descuento;
+          exceso -= descuento;
+        }
+
+        return {
+          metodo: pago.metodo,
+          monto: Number(monto.toFixed(2)),
+        };
+      })
+      .filter((pago) => pago.monto > 0);
+
+    if (exceso > 0.001) {
+      setError(
+        "Los pagos exceden el saldo por cobrar. " +
+          "Solo se permite entregar cambio en efectivo.",
+      );
+      return false;
+    }
+
+    const totalAplicado = pagosNormalizados.reduce(
+      (acc, pago) => acc + Number(pago.monto),
+      0,
     );
 
-    const ticket = {
-      id: ventaGuardada?.id,
-      folio:
-        ventaGuardada?.folio ||
-        ventaGuardada?.numeroVenta ||
-        ventaGuardada?.id,
+    const saldoAplicado = Math.max(totalPorCobrar - totalAplicado, 0);
 
-      fecha:
-        ventaGuardada?.fecha ||
-        ventaGuardada?.fechaVenta ||
-        ventaGuardada?.fechaCreacion ||
-        new Date().toISOString(),
+    const ventaRequest = {
+      ordenServicioId: ordenSeleccionada?.id || null,
 
-      cajaNombre:
-        caja?.nombreCaja || "Caja 1",
-
-      usuario:
-        caja?.usuario || "Usuario",
-
-      clienteId:
-        clienteId ? Number(clienteId) : null,
-
-      clienteNombre:
-        ventaGuardada?.clienteNombre ||
-        clienteSeleccionado?.nombre ||
-        "Público general",
-
-      ordenFolio:
-        ordenSeleccionada?.folio ||
-        ordenSeleccionada?.numeroOrden ||
-        null,
+      clienteId: clienteId ? Number(clienteId) : null,
 
       items: carrito.map((item) => ({
-        id: item.id,
-        codigo: item.codigo || "",
+        productoId: item.productoId != null ? Number(item.productoId) : null,
+
+        servicioId: item.servicioId != null ? Number(item.servicioId) : null,
+
+        detalleOrdenId:
+          item.detalleOrdenId != null ? Number(item.detalleOrdenId) : null,
+
+        codigo: item.codigo || item.id,
         tipo: item.tipo,
         nombre: item.nombre,
         cantidad: Number(item.cantidad),
@@ -636,63 +589,140 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
       iva: Number(iva.toFixed(2)),
       total: Number(total.toFixed(2)),
 
-      /*
-       * Lo que físicamente entregó/pagó el cliente.
-       * Esto sí incluye los $20 si debe recibir $2 de cambio.
-       */
-      pagosRecibidos: pagosValidos.map((pago) => ({
-        metodo: pago.metodo,
-        monto: Number(pago.monto || 0),
-      })),
+      anticipoAplicado: Number(anticipoAplicado.toFixed(2)),
 
-      /*
-       * Lo que realmente quedó aplicado a la venta
-       * y fue enviado al backend.
-       */
-      pagosAplicados: pagosNormalizados,
+      totalPorCobrar: Number(totalPorCobrar.toFixed(2)),
 
-      totalRecibido: Number(totalPagado.toFixed(2)),
-      totalAplicado: Number(totalAplicado.toFixed(2)),
-      cambio: Number(cambio.toFixed(2)),
+      pagos: pagosNormalizados,
+
+      totalPagado: Number(totalAplicado.toFixed(2)),
       saldoPendiente: Number(saldoAplicado.toFixed(2)),
-      estado:
-        saldoAplicado <= 0 ? "PAGADA" : "PENDIENTE",
+
+      estado: saldoAplicado <= 0 ? "PAGADA" : "PENDIENTE",
     };
 
-    nuevaVenta();
+    setProcesandoVenta(true);
 
-    await cargarCatalogos();
+    try {
+      const response = await api.post("/ventas", ventaRequest);
 
-    if (onVentaRegistrada) {
-      await onVentaRegistrada(ventaGuardada);
+      const ventaGuardada = response.data;
+
+      /*
+       * IMPORTANTE:
+       * Creamos el ticket ANTES de ejecutar nuevaVenta(),
+       * porque nuevaVenta() vacía carrito, cliente y pagos.
+       */
+      const clienteSeleccionado = clientes.find(
+        (cliente) => String(cliente.id) === String(clienteId),
+      );
+
+      const ticket = {
+        id: ventaGuardada?.id,
+        folio:
+          ventaGuardada?.folio ||
+          ventaGuardada?.numeroVenta ||
+          ventaGuardada?.id,
+
+        fecha:
+          ventaGuardada?.fecha ||
+          ventaGuardada?.fechaVenta ||
+          ventaGuardada?.fechaCreacion ||
+          new Date().toISOString(),
+
+        cajaNombre: caja?.nombreCaja || "Caja 1",
+
+        usuario: caja?.usuario || "Usuario",
+
+        clienteId: clienteId ? Number(clienteId) : null,
+
+        clienteNombre:
+          ventaGuardada?.clienteNombre ||
+          clienteSeleccionado?.nombre ||
+          "Público general",
+
+        ordenFolio:
+          ordenSeleccionada?.folio || ordenSeleccionada?.numeroOrden || null,
+
+        items: carrito.map((item) => ({
+          id: item.id,
+          codigo: item.codigo || "",
+          tipo: item.tipo,
+          nombre: item.nombre,
+          cantidad: Number(item.cantidad),
+          precio: Number(item.precio),
+        })),
+
+        subtotal: Number(subtotal.toFixed(2)),
+        iva: Number(iva.toFixed(2)),
+        total: Number(total.toFixed(2)),
+
+        // Anticipo registrado previamente en Taller
+        anticipoAplicado: Number(ventaGuardada.anticipoAplicado ?? 0),
+
+        /*
+         * Lo que físicamente entregó/pagó el cliente.
+         * Esto sí incluye los $20 si debe recibir $2 de cambio.
+         */
+        pagosRecibidos: pagosValidos.map((pago) => ({
+          metodo: pago.metodo,
+          monto: Number(pago.monto || 0),
+        })),
+
+        /*
+         * Lo que realmente quedó aplicado a la venta
+         * y fue enviado al backend.
+         */
+        pagosAplicados: pagosNormalizados,
+
+        totalRecibido: Number(totalPagado.toFixed(2)),
+        totalAplicado: Number(totalAplicado.toFixed(2)),
+        cambio: Number(cambio.toFixed(2)),
+        saldoPendiente: Number(saldoAplicado.toFixed(2)),
+        estado: saldoAplicado <= 0 ? "PAGADA" : "PENDIENTE",
+      };
+
+      // La venta ya fue registrada correctamente.
+      // Limpiar el carrito y el borrador local.
+      nuevaVenta();
+
+      // Actualizar catálogos sin invalidar
+      // una venta que ya fue registrada.
+      try {
+        await cargarCatalogos();
+      } catch (error) {
+        console.error("Error actualizando catálogos:", error);
+      }
+
+      // Notificar al componente principal.
+      if (onVentaRegistrada) {
+        try {
+          await onVentaRegistrada(ventaGuardada);
+        } catch (error) {
+          console.error("Error notificando venta registrada:", error);
+        }
+      }
+
+      // Devolver el ticket para imprimirlo.
+      return ticket;
+    } catch (exception) {
+      console.error("Error registrando venta:", exception);
+
+      setError(
+        exception.response?.data?.message ||
+          exception.response?.data?.error ||
+          (typeof exception.response?.data === "string"
+            ? exception.response.data
+            : null) ||
+          exception.message ||
+          "Error al registrar la venta",
+      );
+
+      return false;
+    } finally {
+      setProcesandoVenta(false);
     }
-
-    /*
-     * Antes devolvíamos true.
-     * Ahora devolvemos el objeto ticket.
-     */
-    return ticket;
-  } catch (exception) {
-    console.error(
-      "Error registrando venta:",
-      exception,
-    );
-
-    setError(
-      exception.response?.data?.message ||
-        exception.response?.data?.error ||
-        (typeof exception.response?.data === "string"
-          ? exception.response.data
-          : null) ||
-        exception.message ||
-        "Error al registrar la venta",
-    );
-
-    return false;
-  } finally {
-    setProcesandoVenta(false);
-  }
-};
+  };
 
   return {
     productos,
@@ -717,6 +747,8 @@ export function usePuntoVenta({ caja, onVentaRegistrada }) {
     total,
     subtotal,
     iva,
+    anticipoAplicado,
+    totalPorCobrar,
     totalPagado,
     saldoPendiente,
     cambio,

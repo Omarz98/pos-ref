@@ -1,109 +1,593 @@
-/* =========================
-   SIDEBAR
-========================= */
+
+/* ==========================================
+   POSREF - SIDEBAR
+========================================== */
+
+/* ==========================================
+   1. CONTENEDOR PRINCIPAL
+========================================== */
 
 .sidebar {
-  width: 240px;
-  background: var(--surface);
-  padding: 24px;
-  flex-shrink: 0;
-  color: var(--text);
-  border-radius: 30px;
-  padding: 10px;
-  margin: 10px;
-  box-shadow: 0 -2px 8px rgba(0,0,0,.05);
-}
+  position: sticky;
+  top: 10px;
 
-.sidebar.collapsed {
-  width: 72px;
-}
-
-.sidebar h2 {
-  margin-bottom: 32px;
-}
-
-.sidebar nav {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+
+  width: 250px;
+  min-width: 250px;
+  height: calc(100dvh - 20px);
+  min-height: 0;
+
+  flex-shrink: 0;
+
+  margin: 10px;
+  padding: 18px 12px;
+
+  background: var(--surface);
+  color: var(--text);
+
+  border: 1px solid var(--border);
+  border-radius: 18px;
+
+  box-shadow: var(--shadow);
+  box-sizing: border-box;
+
+  /* El scroll será exclusivo del nav */
+  overflow: hidden;
+
+  transition:
+    width 0.25s ease,
+    min-width 0.25s ease;
 }
 
-.sidebar a,
-.menu-link,
-.menu-link:link,
-.menu-link:visited,
-.menu-link:hover,
-.menu-link:active {
+/* ==========================================
+   2. SIDEBAR COLAPSADO
+========================================== */
+
+.sidebar.collapsed {
+  width: 76px;
+  min-width: 76px;
+  padding: 18px 8px;
+}
+
+/* ==========================================
+   3. HEADER FIJO
+========================================== */
+
+.sidebar-top {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+  min-width: 0;
+
+  flex: 0 0 auto;
+}
+
+/* LOGO */
+
+.derians {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 0;
+  margin-bottom: 16px;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+
+  padding: 10px 6px;
+
+  color: var(--text);
   text-decoration: none;
 }
 
-.sidebar a {
-  padding: 12px;
-  border-radius: 10px;
-  color: var(--text);
-  cursor: pointer;
+.sidebar-brand h2 {
+  margin: 0;
+
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+
+  white-space: nowrap;
 }
 
-.sidebar a.active,
-.sidebar a:hover {
-  background: var(--primary);
-  color: white;
+.sidebar-brand .menu-icon {
+  font-size: 25px;
+  min-width: 25px;
+  flex-shrink: 0;
 }
+
+.sidebar .sidebar-brand:hover {
+  color: var(--primary);
+}
+
+/* LOGO COLAPSADO */
+
+.sidebar.collapsed .sidebar-brand {
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-brand h2 {
+  display: none;
+}
+
+/* ==========================================
+   4. BOTÓN COLAPSAR
+========================================== */
+
+.sidebar-header {
+  display: flex;
+  justify-content: flex-end;
+
+  margin-bottom: 18px;
+  padding: 0 4px;
+}
+
+.collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+
+  border: none;
+  border-radius: 9px;
+
+  background: var(--surface-2);
+  color: var(--text);
+
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.collapse-btn:hover {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
+}
+
+/* ==========================================
+   5. NAVEGACIÓN CON SCROLL
+========================================== */
+
+.sidebar .sidebar-nav {
+  display: flex;
+  flex-direction: column;
+
+  flex: 1 1 auto;
+
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+
+  gap: 5px;
+  padding: 8px 4px;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  box-sizing: border-box;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* SCROLLBAR */
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ==========================================
+   6. ENLACES DEL MENÚ
+========================================== */
+
+.sidebar .menu-link {
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  width: 100%;
+  min-height: 44px;
+
+  padding: 11px 12px;
+
+  border-radius: 10px;
+
+  color: var(--text);
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  flex-shrink: 0;
+  box-sizing: border-box;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+/* ICONOS */
+
+.sidebar .menu-link .menu-icon {
+  font-size: 20px;
+
+  width: 22px;
+  min-width: 22px;
+
+  flex-shrink: 0;
+}
+
+/* TEXTO */
+
+.sidebar .menu-link span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* HOVER */
+
+.sidebar .menu-link:hover {
+  background: var(--surface-2);
+  color: var(--primary);
+}
+
+/* ACTIVO */
+
+.sidebar .menu-link.active {
+  background: var(--primary);
+  color: #ffffff;
+
+  font-weight: 600;
+}
+
+.sidebar .menu-link.active:hover {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+/* ==========================================
+   7. ENLACES COLAPSADOS
+========================================== */
+
+.sidebar.collapsed .menu-link {
+  justify-content: center;
+
+  gap: 0;
+  padding: 12px;
+}
+
+.sidebar.collapsed .menu-link span {
+  display: none;
+}
+
+/* ==========================================
+   8. FOOTER FIJO
+========================================== */
+
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  flex: 0 0 auto;
+
+  padding: 14px 4px 4px;
+
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+
+  box-sizing: border-box;
+}
+
+/* CONTENEDOR DEL SWITCH */
+
+.sidebar-theme {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  margin: 0;
+  padding: 0;
+
+  border: none;
+}
+
+.sidebar-theme-label {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ==========================================
+   9. SWITCH MODO CLARO / OSCURO
+========================================== */
+
+.theme-switch {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 64px;
+  min-width: 64px;
+  height: 32px;
+
+  margin: 0 auto;
+  padding: 4px;
+
+  background: #cbd5e1;
+
+  border: none;
+  border-radius: 30px;
+
+  cursor: pointer;
+
+  transition: background 0.3s ease;
+}
+
+/* MODO OSCURO */
+
+.theme-switch.active {
+  background: #2563eb;
+}
+
+/* ICONOS */
+
+.theme-switch-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+
+  font-size: 16px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* SOL */
+.theme-sun {
+  color: #f59e0b;
+}
+/* LUNA */
+.theme-moon {
+  color: #ffffff;
+}
+
+/* CÍRCULO DESLIZANTE */
+
+.theme-switch-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+
+  background: #ffffff;
+  border-radius: 50%;
+
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+
+/* MODO OSCURO */
+.theme-switch.active .theme-switch-thumb {
+  transform: translateX(32px);
+}
+
+/* LUNA AZUL SOBRE EL CÍRCULO BLANCO */
+.theme-switch.active .theme-moon {
+  color: #1e40af;
+}
+
+/* SOL VISIBLE EN MODO CLARO */
+.theme-switch:not(.active) .theme-sun {
+  color: #d97706;
+}
+/* ==========================================
+   10. FOOTER COLAPSADO
+========================================== */
+
+.sidebar.collapsed .sidebar-footer {
+  padding: 12px 0 4px;
+}
+
+.sidebar.collapsed .sidebar-theme {
+  justify-content: center;
+}
+
+.sidebar.collapsed .theme-switch {
+  transform: scale(0.82);
+}
+
+/* ==========================================
+   11. HAMBURGUESA EN ESCRITORIO
+========================================== */
 
 .hamburger-btn {
   display: none;
 }
 
-.menu-link{
-    display:flex;
-    align-items:center;
-    gap:14px;
+/* ==========================================
+   12. RESPONSIVE MÓVIL
+========================================== */
 
-    padding:12px;
-    border-radius:10px;
+@media (max-width: 768px) {
 
-    color:var(--text);
-    transition:.2s;
+  /* HAMBURGUESA */
+
+  .hamburger-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: fixed;
+    top: 14px;
+    left: 14px;
+
+    z-index: 10002;
+
+    width: 42px;
+    height: 42px;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 10px;
+
+    background: var(--primary);
+    color: #ffffff;
+
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  .hamburger-btn.active {
+    left: 204px;
+
+    background: var(--surface-2);
+    color: var(--text);
+  }
+
+  /* SIDEBAR MÓVIL */
+
+  .sidebar,
+  .sidebar.collapsed {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 260px;
+    min-width: 260px;
+    height: 100dvh;
+
+    margin: 0;
+    padding: 65px 12px 18px;
+
+    border-radius: 0 16px 16px 0;
+
+    z-index: 10000;
+
+    overflow: hidden;
+
+    transform: translateX(-100%);
+
+    transition: transform 0.25s ease;
+  }
+
+  /* SIDEBAR ABIERTO */
+
+  .sidebar.open,
+  .sidebar.collapsed.open {
+    transform: translateX(0);
+  }
+
+  /* HEADER MÓVIL */
+
+  .sidebar-header {
+    display: none;
+  }
+
+  /* MOSTRAR TEXTOS EN MÓVIL */
+
+  .sidebar.collapsed .menu-link {
+    justify-content: flex-start;
+    gap: 13px;
+  }
+
+  .sidebar.collapsed .menu-link span {
+    display: inline;
+  }
+
+  .sidebar.collapsed .sidebar-brand h2 {
+    display: block;
+  }
+
+  /* NAVEGACIÓN MÓVIL */
+
+  .sidebar .sidebar-nav {
+    flex: 1 1 auto;
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* FOOTER MÓVIL */
+
+  .sidebar-footer {
+    padding: 14px 4px 4px;
+  }
+
+  .sidebar.collapsed .theme-switch {
+    transform: none;
+  }
+
+  /* OVERLAY */
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+
+    z-index: 9999;
+
+    background: rgba(0, 0, 0, 0.55);
+  }
 }
 
-.menu-icon{
-    font-size:22px;
-    min-width:22px;
-}
+/* ==========================================
+   13. PANTALLAS PEQUEÑAS
+========================================== */
 
-.sidebar.collapsed .menu-link{
-    justify-content:center;
-    padding:14px;
-}
+@media (max-width: 380px) {
 
-.sidebar.collapsed .menu-link span{
-    display:none;
-}
+  .sidebar,
+  .sidebar.collapsed {
+    width: min(260px, 85vw);
+    min-width: 0;
+  }
 
-.sidebar.collapsed .theme-btn{
-    display:none;
-}
-
-.derians{
-  color: var(--primary);
-    font-weight: 700;
-    text-transform: uppercase;
-    
-}
-
-.sidebar-brand{
-    display:flex;
-    align-items:center;
-    gap:12px;
-}
-
-.logo{
-    width:40px;
-    height:40px;
-    object-fit:contain;
-}
-
-.sidebar-brand h2{
-    margin:0;
-    font-size:1.2rem;
+  .hamburger-btn.active {
+    left: min(204px, 65vw);
+  }
 }

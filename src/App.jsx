@@ -40,6 +40,28 @@ import { DetalleOrdenTaller } from "./pages/taller/DetalleOrdenTaller";
 import { AgendaTaller } from "./pages/taller/AgendaTaller";
 import { Taller } from "./pages/taller/Taller";
 import Inventario from "./pages/inventario/Inventario";
+import Motocicletas from "./pages/Motocicletas/Motocicletas";
+import MotoForm from "./pages/Motocicletas/MotoForm";
+import MotoDetalle from "./pages/Motocicletas/MotoDetalle";
+import ReportesLayout from "./pages/reportes/ReportesLayout";
+import ReporteVentas from "./pages/reportes/ReporteVentas";
+import ReportesDashboard from "./pages/reportes/ReportesDashboard";
+
+function RedireccionInicio() {
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
+
+  const permisos = usuario?.permisos || [];
+
+  if (permisos.includes("VENTA_CREAR")) {
+    return <Navigate to="/pos" replace />;
+  }
+
+  if (permisos.includes("TALLER_DASHBOARD_VER")) {
+    return <Navigate to="/taller" replace />;
+  }
+
+  return <Navigate to="/sin-permiso" replace />;
+}
 
 function App() {
   const [theme, setTheme] = useState("light");
@@ -61,7 +83,7 @@ function App() {
           <Route
             element={<MainLayout theme={theme} cambiarTema={cambiarTema} />}
           >
-            <Route index element={<Navigate to="/pos" replace />} />
+            <Route index element={<RedireccionInicio />} />
 
             <Route
               element={
@@ -192,16 +214,36 @@ function App() {
               <Route path="/home" element={<Home />} />
             </Route>
 
-             <Route
-                  element={
-                    <PermissionRoute
-                      permiso="INVENTARIO_VER"
-                      roles={["ADMINISTRADOR", "ENCARGADO"]}
-                    />
-                  }
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="INVENTARIO_VER"
+                  roles={["ADMINISTRADOR", "ENCARGADO"]}
+                />
+              }
+            >
+              <Route path="/inventario" element={<Inventario />} />
+            </Route>
+
+            {/* REPORTES */}
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="REPORTE_VER"
+                  roles={["ADMINISTRADOR", "ENCARGADO"]}
+                />
+              }
+            >
+              <Route path="reportes" element={<ReportesLayout />}>
+                <Route index element={<ReportesDashboard />} />
+
+                <Route
+                  element={<PermissionRoute permiso="REPORTE_VENTAS_VER" />}
                 >
-                  <Route path="/inventario" element={<Inventario />} />
+                  <Route path="ventas" element={<ReporteVentas />} />
                 </Route>
+              </Route>
+            </Route>
 
             <Route
               element={
@@ -212,6 +254,15 @@ function App() {
               }
             >
               <Route path="taller" element={<Taller />}>
+                {/* DASHBOARD */}
+                <Route
+                  element={
+                    <PermissionRoute
+                      permiso="TALLER_DASHBOARD_VER"
+                      roles={["ADMINISTRADOR", "ENCARGADO", "MECANICO"]}
+                    />
+                  }
+                ></Route>
                 <Route index element={<TallerDashboard />} />
 
                 <Route
@@ -237,8 +288,6 @@ function App() {
                   <Route path="ordenes/nueva" element={<NuevaOrdenTaller />} />
                 </Route>
 
-               
-
                 <Route
                   element={
                     <PermissionRoute
@@ -249,6 +298,23 @@ function App() {
                 >
                   <Route path="agenda" element={<AgendaTaller />} />
                 </Route>
+
+                <Route
+                  element={
+                    <PermissionRoute
+                      permiso="TALLER_VER"
+                      roles={["ADMINISTRADOR", "ENCARGADO", "MECANICO"]}
+                    />
+                  }
+                >
+                  <Route path="motocicletas" element={<Motocicletas />} />
+                </Route>
+
+                <Route path="motocicletas/nueva" element={<MotoForm />} />
+
+                <Route path="motocicletas/:id/editar" element={<MotoForm />} />
+
+                <Route path="motocicletas/:id" element={<MotoDetalle />} />
               </Route>
             </Route>
           </Route>

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { FaUser } from "react-icons/fa";
 import { FaMotorcycle } from "react-icons/fa6";
 import { BsClipboardDataFill } from "react-icons/bs";
@@ -7,8 +7,6 @@ import { MdOutlineMiscellaneousServices } from "react-icons/md";
 import { GiAutoRepair } from "react-icons/gi";
 import "../styles/AgregarOrden.css";
 import api from "../services/api";
-
-const API_URL = "http://localhost:8080/api";
 
 const crearDetalleServicio = () => ({
   servicioId: "",
@@ -45,6 +43,25 @@ export function Ordenes() {
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
 
+  const buscadorProductosRef = useRef(null);
+
+  useEffect(() => {
+    const cerrarBuscador = (event) => {
+      if (
+        buscadorProductosRef.current &&
+        !buscadorProductosRef.current.contains(event.target)
+      ) {
+        setMostrarProductos(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", cerrarBuscador);
+
+    return () => {
+      document.removeEventListener("pointerdown", cerrarBuscador);
+    };
+  }, []);
+
   const navigate = useNavigate();
 
   const irAgregarCliente = () => {
@@ -73,6 +90,31 @@ export function Ordenes() {
 
   const [detallesProductos, setDetallesProductos] = useState([]);
 
+  const [pagosAnticipo, setPagosAnticipo] = useState([
+    { metodoPago: "EFECTIVO", monto: "" },
+  ]);
+
+  function agregarPagoAnticipo() {
+    setPagosAnticipo((actuales) => [
+      ...actuales,
+      { metodoPago: "EFECTIVO", monto: "" },
+    ]);
+  }
+
+  function cambiarPagoAnticipo(index, campo, valor) {
+    setPagosAnticipo((actuales) =>
+      actuales.map((pago, posicion) =>
+        posicion === index ? { ...pago, [campo]: valor } : pago,
+      ),
+    );
+  }
+
+  function eliminarPagoAnticipo(index) {
+    setPagosAnticipo((actuales) =>
+      actuales.filter((_, posicion) => posicion !== index),
+    );
+  }
+
   useEffect(() => {
     cargarCatalogos();
   }, []);
@@ -94,9 +136,7 @@ export function Ordenes() {
 
       const productosData = productosResponse.data ?? [];
 
-      setClientes(
-        clientesData.filter((cliente) => cliente.activo !== false),
-    );
+      setClientes(clientesData.filter((cliente) => cliente.activo !== false));
 
       setServicios(
         serviciosData.filter((servicio) => servicio.activo !== false),
@@ -125,59 +165,42 @@ export function Ordenes() {
   }
 
   async function cargarMotosCliente(clienteId) {
-  if (!clienteId) {
-    setMotosCliente([]);
-    return;
-  }
+    if (!clienteId) {
+      setMotosCliente([]);
+      return;
+    }
 
-  setError("");
+    setError("");
 
-  try {
-    const response = await api.get(
-      `/motocicletas/cliente/${clienteId}`
-    );
+    try {
+      const response = await api.get(`/motocicletas/cliente/${clienteId}`);
 
-    const motosData = response.data ?? [];
+      const motosData = response.data ?? [];
 
-    setMotosCliente(motosData);
-  } catch (exception) {
-    console.error(
-      "Error al consultar motocicletas:",
-      exception
-    );
+      setMotosCliente(motosData);
+    } catch (exception) {
+      console.error("Error al consultar motocicletas:", exception);
 
-    console.error(
-      "Código HTTP:",
-      exception.response?.status
-    );
+      console.error("Código HTTP:", exception.response?.status);
 
-    console.error(
-      "Respuesta backend:",
-      exception.response?.data
-    );
+      console.error("Respuesta backend:", exception.response?.data);
 
-    setMotosCliente([]);
+      setMotosCliente([]);
 
-    if (exception.response?.status === 401) {
-      setError(
-        "La sesión expiró. Inicia sesión nuevamente."
-      );
-    } else if (exception.response?.status === 403) {
-      setError(
-        "No tienes permiso para consultar las motocicletas."
-      );
-    } else if (exception.response?.status === 404) {
-      setError(
-        "No se encontraron motocicletas para el cliente."
-      );
-    } else {
-      setError(
-        exception.response?.data?.message ||
-          "No fue posible consultar las motocicletas del cliente"
-      );
+      if (exception.response?.status === 401) {
+        setError("La sesión expiró. Inicia sesión nuevamente.");
+      } else if (exception.response?.status === 403) {
+        setError("No tienes permiso para consultar las motocicletas.");
+      } else if (exception.response?.status === 404) {
+        setError("No se encontraron motocicletas para el cliente.");
+      } else {
+        setError(
+          exception.response?.data?.message ||
+            "No fue posible consultar las motocicletas del cliente",
+        );
+      }
     }
   }
-}
 
   function seleccionarCliente(cliente) {
     setOrden((ordenActual) => ({
@@ -336,8 +359,20 @@ export function Ordenes() {
   const subtotal = subtotalServicios + subtotalProductos;
   const iva = subtotal * 0.16;
   const total = subtotal;
-  const anticipo = Number(orden.anticipo || 0);
-  const saldoPendiente = Math.max(total - anticipo, 0);
+
+  // Suma de los pagos capturados
+  const anticipo =
+    Math.round(
+      pagosAnticipo.reduce(
+        (suma, pago) => suma + (Number(pago.monto) || 0),
+        0,
+      ) * 100,
+    ) / 100;
+
+  const saldoPendiente = Math.max(
+    Math.round((total - anticipo) * 100) / 100,
+    0,
+  );
 
   const clientesFiltrados = useMemo(() => {
     const texto = busquedaCliente.trim().toLowerCase();
@@ -416,6 +451,29 @@ export function Ordenes() {
       return "El anticipo no puede ser mayor al total";
     }
 
+    if (
+      pagosAnticipo.some((pago) => {
+        const monto = Number(pago.monto);
+
+        return pago.monto !== "" && (!Number.isFinite(monto) || monto < 0);
+      })
+    ) {
+      return "Los pagos del anticipo no pueden ser negativos";
+    }
+
+    if (pagosAnticipo.some((pago) => pago.monto !== "" && !pago.metodoPago)) {
+      return "Selecciona el método de pago del anticipo";
+    }
+
+    if (
+      pagosAnticipo.some(
+        (pago) =>
+          Number(pago.monto) > 0 && !Number.isInteger(Number(pago.monto) * 100),
+      )
+    ) {
+      return "Los pagos solo pueden tener dos decimales";
+    }
+
     return "";
   }
 
@@ -453,6 +511,13 @@ export function Ordenes() {
       total,
       anticipo,
       saldoPendiente,
+
+      pagosAnticipo: pagosAnticipo
+        .filter((pago) => Number(pago.monto) > 0)
+        .map((pago) => ({
+          metodoPago: pago.metodoPago,
+          monto: Number(pago.monto),
+        })),
       servicios: detallesServicios
         .filter((detalle) => detalle.servicioId)
         .map((detalle) => ({
@@ -472,37 +537,37 @@ export function Ordenes() {
 
     try {
       setGuardando(true);
-      
+
       const response = await api.post("/ordenes-taller", payload);
 
       const ordenGuardada = response.data;
 
-    setMensaje(
-      `Orden ${
-        ordenGuardada.folio || ordenGuardada.id
-      } registrada correctamente`
-    );
+      setMensaje(
+        `Orden ${
+          ordenGuardada.folio || ordenGuardada.id
+        } registrada correctamente`,
+      );
 
-    limpiarFormulario();
+      limpiarFormulario();
     } catch (exception) {
-    console.error("Error al guardar la orden:", exception);
+      console.error("Error al guardar la orden:", exception);
 
-    const mensajeError =
-      exception.response?.data?.message ||
-      exception.response?.data?.error ||
-      exception.response?.data ||
-      exception.message ||
-      "No fue posible registrar la orden";
+      const mensajeError =
+        exception.response?.data?.message ||
+        exception.response?.data?.error ||
+        exception.response?.data ||
+        exception.message ||
+        "No fue posible registrar la orden";
 
-    setError(
-      typeof mensajeError === "string"
-        ? mensajeError
-        : JSON.stringify(mensajeError)
-    );
-  } finally {
-    setGuardando(false);
+      setError(
+        typeof mensajeError === "string"
+          ? mensajeError
+          : JSON.stringify(mensajeError),
+      );
+    } finally {
+      setGuardando(false);
+    }
   }
-}
 
   function limpiarFormulario() {
     setOrden({
@@ -520,7 +585,7 @@ export function Ordenes() {
       observaciones: "",
       anticipo: 0,
     });
-
+    setPagosAnticipo([{ metodoPago: "EFECTIVO", monto: "" }]);
     setBusquedaCliente("");
     setBusquedaProducto("");
     setMotosCliente([]);
@@ -971,7 +1036,7 @@ export function Ordenes() {
               </div>
             </div>
 
-            <div className="product-search search-container">
+            <div className="product-search search-container" ref={buscadorProductosRef}>
               <span>🔍</span>
 
               <input
@@ -1186,21 +1251,70 @@ export function Ordenes() {
               <strong>{formatearMoneda(total)}</strong>
             </div>
 
-            <div className="form-group">
-              <label>Anticipo</label>
+            <div className="anticipo-section">
+              <div className="anticipo-section__header">
+                <div>
+                  <h3>Anticipo</h3>
+                  <p>Agrega uno o varios métodos de pago.</p>
+                </div>
+              </div>
 
-              <div className="money-input">
-                <span>$</span>
+              {pagosAnticipo.map((pago, index) => (
+                <div className="anticipo-pago" key={index}>
+                  <div className="form-group">
+                    <label>Método de pago</label>
 
-                <input
-                  type="number"
-                  name="anticipo"
-                  value={orden.anticipo}
-                  min="0"
-                  max={total}
-                  step="0.01"
-                  onChange={cambiarCampo}
-                />
+                    <select
+                      value={pago.metodoPago}
+                      onChange={(e) =>
+                        cambiarPagoAnticipo(index, "metodoPago", e.target.value)
+                      }
+                    >
+                      <option value="EFECTIVO">Efectivo</option>
+                      <option value="TARJETA">Tarjeta</option>
+                      <option value="TRANSFERENCIA">Transferencia</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Monto</label>
+
+                    <input
+                      type="number"
+                      min="0"
+                      max={total}
+                      step="0.01"
+                      placeholder="0.00"
+                      value={pago.monto}
+                      onChange={(e) =>
+                        cambiarPagoAnticipo(index, "monto", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    className="anticipo-pago__eliminar"
+                    title="Eliminar método de pago"
+                    aria-label="Eliminar método de pago"
+                    onClick={() => eliminarPagoAnticipo(index)}
+                  >
+                    🗑️
+                  </button>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="btn btn-outline btn-block"
+                onClick={agregarPagoAnticipo}
+              >
+                + Agregar método de pago
+              </button>
+
+              <div className="summary-balance">
+                <span>Anticipo total</span>
+                <strong>{formatearMoneda(anticipo)}</strong>
               </div>
             </div>
 

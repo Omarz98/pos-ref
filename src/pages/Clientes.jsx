@@ -1,5 +1,4 @@
-import { useEffect, useState, FaMotorcycle } from "react";
-import FormCard from "../components/FormCard";
+import { useEffect, useState } from "react";
 import DataTable from "../components/DataTable";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import api from "../services/api";
@@ -11,22 +10,18 @@ export function Clientes() {
   const [email, setEmail] = useState("");
   const [direccion, setDireccion] = useState("");
   const [rfc, setRfc] = useState("");
-  const [activo, setActivo] = useState("");
   const [editandoId, setEditandoId] = useState(null);
   const [busqueda, setBusqueda] = useState("");
 
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [mostrarFormularioMoto, setMostrarFormularioMoto] = useState(false);
 
-  const [motoMarcas, setMotoMarcas] = useState([]);
   const [motoModelos, setMotoModelos] = useState([]);
   const [motoVersiones, setMotoVersiones] = useState([]);
 
-  const [marcaId, setMarcaId] = useState("");
   const [modeloId, setModeloId] = useState("");
   const [versionId, setVersionId] = useState("");
 
-  const [anio, setAnio] = useState("");
   const [placas, setPlaca] = useState("");
   const [color, setColor] = useState("");
   const [numeroSerie, setNumeroSerie] = useState("");
@@ -35,6 +30,19 @@ export function Clientes() {
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
 
+  const [modalCliente, setModalCliente] = useState(false);
+
+  const abrirNuevoCliente = () => {
+    limpiarFormulario();
+    setError("");
+    setModalCliente(true);
+  };
+
+  const cerrarModalCliente = () => {
+    setModalCliente(false);
+    limpiarFormulario();
+  };
+
   useEffect(() => {
     fetchClientes();
   }, []);
@@ -42,7 +50,7 @@ export function Clientes() {
   const clientesFiltrados = clientes.filter(
     (cliente) =>
       cliente.activo &&
-      cliente.nombre.toLowerCase().includes(busqueda.toLowerCase()),
+      (cliente.nombre || "").toLowerCase().includes(busqueda.toLowerCase()),
   );
 
   const fetchClientes = async () => {
@@ -63,15 +71,15 @@ export function Clientes() {
       setMotoModelos(motomodelosData);
     } catch (error) {
       console.error("Error al obtener cliente", error);
-      console.error("Código HTTP:", exception.response?.status);
+      console.error("Código HTTP:", error.response?.status);
 
-      console.error("Respuesta backend:", exception.response?.data);
+      console.error("Respuesta backend:", error.response?.data);
 
-      const mensajeBackend = exception.response?.data?.message;
+      const mensajeBackend = error.response?.data?.message;
 
-      if (exception.response?.status === 401) {
+      if (error.response?.status === 401) {
         setError("La sesión expiró. Inicia sesión nuevamente.");
-      } else if (exception.response?.status === 403) {
+      } else if (error.response?.status === 403) {
         setError("No tienes permisos para consultar clientes.");
       } else {
         setError(mensajeBackend || "No fue posible cargar los clientes");
@@ -86,20 +94,24 @@ export function Clientes() {
   };
 
   const limpiarFormularioMoto = () => {
-    setMarcaId("");
     setModeloId("");
     setVersionId("");
-    setAnio("");
     setPlaca("");
     setColor("");
     setNumeroSerie("");
     setKilometraje("");
   };
 
-  const crearCliente = async () => {
+  const crearCliente = async (event) => {
+    event?.preventDefault();
     setMensaje("");
     setError("");
-    if (!nombre || !telefono || !email || !direccion) {
+    if (
+      !nombre.trim() ||
+      !telefono.trim() ||
+      !email.trim() ||
+      !direccion.trim()
+    ) {
       alert("Completa todos los campos");
       return;
     }
@@ -119,30 +131,26 @@ export function Clientes() {
 
         const clienteGuardado = response.data;
 
-        setMensaje(
-          `Cliente ${clienteGuardado.nombre} editado correctamente`,
-        );
+        setMensaje(`Cliente ${clienteGuardado.nombre} editado correctamente`);
         setEditandoId(null);
       } else {
         const response = await api.post("/clientes", cliente);
-         const clienteGuardado = response.data;
+        const clienteGuardado = response.data;
 
-        setMensaje(
-          `Cliente ${clienteGuardado.nombre} agregado correctamente`,
-        );
+        setMensaje(`Cliente ${clienteGuardado.nombre} agregado correctamente`);
       }
 
-      limpiarFormulario();
-      fetchClientes();
+      cerrarModalCliente();
+      await fetchClientes();
     } catch (error) {
       console.error("Error al guardar cliente", error);
-      const mensajeError = "No fue posible registrar el cliente";
+      const mensajeError =
+        error.response?.data?.message || "No fue posible guardar el cliente";
       setError(
-      typeof mensajeError === "string"
-        ? mensajeError
-        : JSON.stringify(mensajeError)
-    );
-
+        typeof mensajeError === "string"
+          ? mensajeError
+          : JSON.stringify(mensajeError),
+      );
     }
   };
 
@@ -174,10 +182,15 @@ export function Clientes() {
       kilometrajeActual: kilometraje ? Number(kilometraje) : 0,
       activo: true,
     };
-    console.log(JSON.stringify(moto, null, 2));
+    {
+      /*console.log(JSON.stringify(moto, null, 2));*/
+    }
     try {
-      const response = await api.post(`http://localhost:8080/api/clientes/${clienteSeleccionado.id}/motos`, moto);
-      
+      const response = await api.post(
+        `/clientes/${clienteSeleccionado.id}/motos`,
+        moto,
+      );
+
       alert("Motocicleta registrada correctamente");
 
       limpiarFormularioMoto();
@@ -190,42 +203,40 @@ export function Clientes() {
   };
 
   const eliminarCliente = async (cliente) => {
-
-  const confirmar = window.confirm(
-    `¿Estás seguro de que deseas eliminar al cliente "${cliente.nombre}"?`
-  );
-
-  if (!confirmar) {
-    return;
-  }
-
-  try {
-    const clienteAEliminar = {
-      nombre: cliente.nombre,
-      telefono: cliente.telefono,
-      email: cliente.email,
-      direccion: cliente.direccion,
-      rfc: cliente.rfc,
-      activo: false,
-    };
-
-    const response = await api.put(
-      `/clientes/${cliente.id}`,
-      clienteAEliminar
+    const confirmar = window.confirm(
+      `¿Estás seguro de que deseas eliminar al cliente "${cliente.nombre}"?`,
     );
 
-    const clienteEliminado = response.data;
+    if (!confirmar) {
+      return;
+    }
 
-    alert(`Cliente "${clienteEliminado.nombre}" eliminado correctamente`);
+    try {
+      const clienteAEliminar = {
+        nombre: cliente.nombre,
+        telefono: cliente.telefono,
+        email: cliente.email,
+        direccion: cliente.direccion,
+        rfc: cliente.rfc,
+        activo: false,
+      };
 
-    fetchClientes();
+      const response = await api.put(
+        `/clientes/${cliente.id}`,
+        clienteAEliminar,
+      );
 
-  } catch (error) {
-    console.error("Error al eliminar cliente", error);
+      const clienteEliminado = response.data;
 
-    alert("Ocurrió un error al eliminar el cliente");
-  }
-};
+      alert(`Cliente "${clienteEliminado.nombre}" eliminado correctamente`);
+
+      fetchClientes();
+    } catch (error) {
+      console.error("Error al eliminar cliente", error);
+
+      alert("Ocurrió un error al eliminar el cliente");
+    }
+  };
 
   const editarCliente = (cliente) => {
     setNombre(cliente.nombre);
@@ -233,8 +244,9 @@ export function Clientes() {
     setEmail(cliente.email);
     setDireccion(cliente.direccion);
     setRfc(cliente.rfc);
-    setActivo(cliente.activo);
     setEditandoId(cliente.id);
+    setError("");
+    setModalCliente(true);
   };
 
   const limpiarFormulario = () => {
@@ -243,7 +255,6 @@ export function Clientes() {
     setEmail("");
     setDireccion("");
     setRfc("");
-    setActivo("");
     setEditandoId(null);
   };
 
@@ -285,11 +296,9 @@ export function Clientes() {
         </div>
         <div className="header-actions">
           <button
+            type="button"
             className="primary-btn"
-            onClick={() => {
-              setNombre("");
-              setEditandoId(null);
-            }}
+            onClick={abrirNuevoCliente}
           >
             + Nuevo cliente
           </button>
@@ -310,207 +319,257 @@ export function Clientes() {
         </div>
       )}
 
-      <section className="content">
-        <DataTable
-          title="Listado de clientes"
-          searchPlaceholder="Buscar cliente..."
-          searchValue={busqueda}
-          onSearchChange={setBusqueda}
-          columns={columns}
-          data={clientesFiltrados}
-          actions={actions}
-        />
+      <section className="clientes-layout">
+        <div className="clientes-table-container">
+          <DataTable
+            title="Listado de clientes"
+            searchPlaceholder="Buscar cliente..."
+            searchValue={busqueda}
+            onSearchChange={setBusqueda}
+            columns={columns}
+            data={clientesFiltrados}
+            actions={actions}
+          />
+        </div>
+      </section>
 
-        <FormCard
-          title={editandoId ? "Editar cliente" : "Nuevo cliente"}
-          buttonText={editandoId ? "Actualizar cliente" : "Guardar cliente"}
-          onSubmit={crearCliente}
-        >
-          <div className="form-group">
-            <label>Nombre</label>
-            <input
-              type="text"
-              placeholder="Ej. Abel"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Telefono</label>
-            <input
-              type="number"
-              placeholder="5510203040"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="ejemplo@gmail.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Direccion</label>
-            <textarea
-              placeholder="CDMX"
-              value={direccion}
-              onChange={(e) => setDireccion(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>RFC</label>
-            <input
-              type="text"
-              placeholder="XAXXXXXXXX"
-              value={rfc}
-              onChange={(e) => setRfc(e.target.value)}
-            />
-          </div>
-
-          {editandoId && (
-            <button className="primary-btn" onClick={limpiarFormulario}>
-              Cancelar edición
-            </button>
-          )}
-        </FormCard>
-        {mostrarFormularioMoto && clienteSeleccionado && (
-          <div className="modal-overlay">
-            <div className="modal-content modal-moto">
-              <div className="modal-header">
-                <div>
-                  <h2>Agregar motocicleta</h2>
-                  <p>
-                    Cliente: <strong>{clienteSeleccionado.nombre}</strong>
-                  </p>
+      {modalCliente && (
+        <div className="clientes-modal-overlay">
+          <div
+            className="clientes-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="clientes-modal-title"
+          >
+            <div className="clientes-modal-header">
+              <div>
+                <h2 id="clientes-modal-title">
+                  {editandoId != null ? "Editar cliente" : "Nuevo cliente"}
+                </h2>
+                <p>
+                  {editandoId != null
+                    ? "Actualiza la información del cliente."
+                    : "Registra un cliente en POSREF."}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="clientes-modal-close"
+                onClick={cerrarModalCliente}
+                aria-label="Cerrar"
+              >
+                ×
+              </button>
+            </div>
+            <form className="clientes-modal-form" onSubmit={crearCliente}>
+              <div className="clientes-modal-body">
+                <div className="clientes-form-grid">
+                  <div className="form-group full-width">
+                    <label htmlFor="cliente-nombre">Nombre *</label>
+                    <input
+                      id="cliente-nombre"
+                      type="text"
+                      value={nombre}
+                      onChange={(e) => setNombre(e.target.value)}
+                      placeholder="Ej. Abel"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="cliente-telefono">Teléfono *</label>
+                    <input
+                      id="cliente-telefono"
+                      type="tel"
+                      value={telefono}
+                      onChange={(e) => setTelefono(e.target.value)}
+                      placeholder="5510203040"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="cliente-rfc">RFC</label>
+                    <input
+                      id="cliente-rfc"
+                      type="text"
+                      maxLength={13}
+                      value={rfc}
+                      onChange={(e) => setRfc(e.target.value.toUpperCase())}
+                      placeholder="XAXX010101000"
+                    />
+                  </div>
+                  <div className="form-group full-width">
+                    <label htmlFor="cliente-email">Correo electrónico *</label>
+                    <input
+                      id="cliente-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="ejemplo@gmail.com"
+                      required
+                    />
+                  </div>
+                  <div className="form-group full-width">
+                    <label htmlFor="cliente-direccion">Dirección *</label>
+                    <textarea
+                      id="cliente-direccion"
+                      rows={3}
+                      value={direccion}
+                      onChange={(e) => setDireccion(e.target.value)}
+                      placeholder="Dirección del cliente"
+                      required
+                    />
+                  </div>
                 </div>
-
+              </div>
+              <div className="clientes-modal-footer">
                 <button
                   type="button"
-                  className="modal-close"
-                  onClick={() => setMostrarFormularioMoto(false)}
+                  className="secondary-btn"
+                  onClick={cerrarModalCliente}
                 >
-                  ×
+                  Cancelar
+                </button>
+                <button type="submit" className="primary-btn">
+                  {editandoId != null
+                    ? "Actualizar cliente"
+                    : "Guardar cliente"}
                 </button>
               </div>
-
-              <form onSubmit={guardarMoto}>
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Modelo</label>
-
-                    <select
-                      value={modeloId}
-                      onChange={(e) => setModeloId(e.target.value)}
-                    >
-                      <option value="">Selecciona un modelo</option>
-
-                      {motoModelos
-                        .filter((modelo) => modelo.activo)
-                        .map((modelo) => (
-                          <option key={modelo.id} value={modelo.id}>
-                            {modelo.nombre}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Versión</label>
-
-                    <select
-                      value={versionId}
-                      onChange={(e) => setVersionId(e.target.value)}
-                      disabled={!modeloId}
-                    >
-                      <option value="">Sin versión</option>
-
-                      {motoVersiones
-                        .filter(
-                          (version) =>
-                            version.activo &&
-                            version.motoModeloId === Number(modeloId),
-                        )
-                        .map((version) => (
-                          <option key={version.id} value={version.id}>
-                            {`${version.version} (${version.anio})`}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Placa</label>
-
-                    <input
-                      type="text"
-                      value={placas}
-                      onChange={(e) => setPlaca(e.target.value.toUpperCase())}
-                      placeholder="Ej. 45ABC2"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Color</label>
-
-                    <input
-                      type="text"
-                      value={color}
-                      onChange={(e) => setColor(e.target.value)}
-                      placeholder="Ej. Negro"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Número de serie</label>
-
-                    <input
-                      type="text"
-                      value={numeroSerie}
-                      onChange={(e) =>
-                        setNumeroSerie(e.target.value.toUpperCase())
-                      }
-                      placeholder="Número VIN o serie"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Kilometraje</label>
-
-                    <input
-                      type="number"
-                      min="0"
-                      value={kilometraje}
-                      onChange={(e) => setKilometraje(e.target.value)}
-                      placeholder="Ej. 12500"
-                    />
-                  </div>
-                </div>
-
-                <div className="modal-actions">
-                  <button
-                    type="button"
-                    className="secondary-btn"
-                    onClick={() => setMostrarFormularioMoto(false)}
-                  >
-                    Cancelar
-                  </button>
-
-                  <button type="submit" className="primary-btn">
-                    Guardar motocicleta
-                  </button>
-                </div>
-              </form>
-            </div>
+            </form>
           </div>
-        )}
-      </section>
+        </div>
+      )}
+
+      {mostrarFormularioMoto && clienteSeleccionado && (
+        <div className="modal-overlay">
+          <div className="modal-content modal-moto">
+            <div className="modal-header">
+              <div>
+                <h2>Agregar motocicleta</h2>
+                <p>
+                  Cliente: <strong>{clienteSeleccionado.nombre}</strong>
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setMostrarFormularioMoto(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={guardarMoto}>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Modelo</label>
+
+                  <select
+                    value={modeloId}
+                    onChange={(e) => setModeloId(e.target.value)}
+                  >
+                    <option value="">Selecciona un modelo</option>
+
+                    {motoModelos
+                      .filter((modelo) => modelo.activo)
+                      .map((modelo) => (
+                        <option key={modelo.id} value={modelo.id}>
+                          {modelo.nombre}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Versión</label>
+
+                  <select
+                    value={versionId}
+                    onChange={(e) => setVersionId(e.target.value)}
+                    disabled={!modeloId}
+                  >
+                    <option value="">Sin versión</option>
+
+                    {motoVersiones
+                      .filter(
+                        (version) =>
+                          version.activo &&
+                          version.motoModeloId === Number(modeloId),
+                      )
+                      .map((version) => (
+                        <option key={version.id} value={version.id}>
+                          {`${version.version} (${version.anio})`}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Placa</label>
+
+                  <input
+                    type="text"
+                    value={placas}
+                    onChange={(e) => setPlaca(e.target.value.toUpperCase())}
+                    placeholder="Ej. 45ABC2"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Color</label>
+
+                  <input
+                    type="text"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    placeholder="Ej. Negro"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Número de serie</label>
+
+                  <input
+                    type="text"
+                    value={numeroSerie}
+                    onChange={(e) =>
+                      setNumeroSerie(e.target.value.toUpperCase())
+                    }
+                    placeholder="Número VIN o serie"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Kilometraje</label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    value={kilometraje}
+                    onChange={(e) => setKilometraje(e.target.value)}
+                    placeholder="Ej. 12500"
+                  />
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={() => setMostrarFormularioMoto(false)}
+                >
+                  Cancelar
+                </button>
+
+                <button type="submit" className="primary-btn">
+                  Guardar motocicleta
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }

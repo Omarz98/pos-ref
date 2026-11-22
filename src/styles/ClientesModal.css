@@ -1,0 +1,187 @@
+/* Agrega este archivo al CSS existente de Clientes */
+.clientes-content { width:100%; min-width:0; max-width:100%; }
+.clientes-content > * { min-width:0; max-width:100%; }
+.clientes-modal-overlay { position:fixed; inset:0; z-index:11000; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; background:rgba(2,6,23,.65); backdrop-filter:blur(4px); }
+.clientes-modal { display:flex; flex-direction:column; width:100%; max-width:650px; max-height:calc(100dvh - 40px); min-height:0; overflow:hidden; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:18px; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+.clientes-modal-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:24px 28px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.clientes-modal-header h2 { margin:0 0 6px; font-size:22px; }
+.clientes-modal-header p { margin:0; font-size:14px; color:var(--muted); }
+.clientes-modal-close { display:flex; align-items:center; justify-content:center; width:36px; height:36px; flex-shrink:0; border:0; border-radius:10px; background:var(--surface-2); color:var(--text); font-size:26px; cursor:pointer; }
+.clientes-modal-form { display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }
+.clientes-modal-body { flex:1 1 auto; min-height:0; padding:24px 28px; overflow-y:auto; overscroll-behavior:contain; }
+.clientes-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.clientes-form-grid .full-width { grid-column:1/-1; }
+.clientes-form-grid .form-group { display:flex; flex-direction:column; gap:8px; min-width:0; }
+.clientes-form-grid label { font-size:14px; font-weight:600; color:var(--text); }
+.clientes-form-grid input,.clientes-form-grid textarea { width:100%; min-width:0; box-sizing:border-box; padding:12px 14px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); border-radius:10px; font:inherit; }
+.clientes-form-grid textarea { resize:vertical; min-height:90px; }
+.clientes-form-grid input:focus,.clientes-form-grid textarea:focus { outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.12); }
+.clientes-modal-footer { display:flex; align-items:center; justify-content:flex-end; gap:12px; flex-shrink:0; padding:18px 28px; border-top:1px solid var(--border); background:var(--surface); }
+.clientes-modal-footer button { min-height:42px; padding:10px 20px; border-radius:10px; cursor:pointer; }
+@media(max-width:768px) { .clientes-modal-overlay { padding:12px; } .clientes-modal { max-height:calc(100dvh - 24px); } .clientes-modal-header,.clientes-modal-body,.clientes-modal-footer { padding:18px; } .clientes-form-grid { grid-template-columns:1fr; gap:16px; } .clientes-modal-footer button { flex:1; } }
+
+
+
+/* =====================================
+   CLIENTES - LAYOUT
+===================================== */
+
+.clientes-layout {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.clientes-table-container {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Evitar desbordamiento de la tarjeta */
+
+.clientes-table-container > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* =====================================
+   TABLA
+===================================== */
+
+/* El contenedor de la tabla tendrá scroll */
+
+.clientes-table-container .table-wrapper {
+  display: block;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Tabla con ancho mínimo */
+
+.clientes-table-container table {
+  width: 100%;
+  min-width: 950px;
+
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+/* Celdas */
+
+.clientes-table-container th,
+.clientes-table-container td {
+  padding: 14px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* Textos largos */
+
+.clientes-table-container td {
+  overflow-wrap: anywhere;
+}
+
+/* Columna de acciones */
+
+.clientes-table-container th:last-child,
+.clientes-table-container td:last-child {
+  min-width: 170px;
+  width: 170px;
+  white-space: nowrap;
+}
+
+/* Botones de acciones */
+
+.clientes-table-container td:last-child button {
+  flex-shrink: 0;
+}
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media (max-width: 768px) {
+  .clientes-layout {
+    width: 100%;
+  }
+
+  .clientes-table-container table {
+    min-width: 850px;
+  }
+}
+
+
+
+/* ===================================
+   CLIENTES - CONTENEDOR
+=================================== */
+
+.clientes-layout {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.clientes-table-container {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.clientes-table-container > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ===================================
+   TABLA CON SCROLL INTERNO
+=================================== */
+
+.clientes-table-container .table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.clientes-table-container table {
+  width: 100%;
+  min-width: 950px;
+  border-collapse: collapse;
+}
+
+/* ===================================
+   RESPONSIVE
+=================================== */
+
+@media (max-width: 768px) {
+  .clientes-layout,
+  .clientes-table-container {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .clientes-table-container table {
+    min-width: 850px;
+  }
+}
+

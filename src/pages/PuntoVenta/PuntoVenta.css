@@ -1277,3 +1277,232 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+.cart-advance,
+.cart-remaining,
+.payment-order-summary > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cart-advance {
+  margin-top: 12px;
+  padding: 10px 0;
+  color: #059669;
+  font-size: 13px;
+}
+
+.cart-remaining {
+  margin-top: 8px;
+  padding: 14px 12px;
+  background: var(--surface-2, #f3f4f6);
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.cart-remaining strong {
+  color: var(--primary, #2563eb);
+  font-size: 20px;
+}
+
+.payment-order-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+}
+
+.payment-order-summary__remaining {
+  padding-top: 12px;
+  border-top: 1px solid var(--border, #e5e7eb);
+  font-weight: 700;
+}
+
+.payment-order-summary__remaining strong {
+  color: var(--primary, #2563eb);
+}
+
+
+
+/* nuevo css ticket*/
+
+
+/* Selector de tamaño de papel */
+
+.ticket-print-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+}
+
+.ticket-print-options > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ticket-print-options small {
+  font-size: 12px;
+  color: var(--pos-muted, #64748b);
+}
+
+.ticket-size-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.ticket-size-buttons button {
+  padding: 9px 14px;
+  border: 1px solid var(--pos-border, #e2e8f0);
+  border-radius: 9px;
+  background: var(--pos-surface, white);
+  color: var(--pos-text, #111827);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ticket-size-buttons button.active {
+  background: var(--pos-primary, #2563eb);
+  color: white;
+  border-color: var(--pos-primary, #2563eb);
+}
+
+/* Vista previa del ticket */
+
+.ticket-paper--58 {
+  width: 58mm;
+  max-width: 100%;
+  padding: 3mm;
+  font-size: 10px;
+}
+
+.ticket-paper--80 {
+  width: 80mm;
+  max-width: 100%;
+  padding: 4mm;
+  font-size: 12px;
+}
+
+.ticket-paper--58 .ticket-logo {
+  font-size: 24px;
+}
+
+.ticket-paper--58 .ticket-business h1 {
+  font-size: 17px;
+}
+
+.ticket-paper--80 .ticket-business h1 {
+  font-size: 21px;
+}
+
+.ticket-advance,
+.ticket-remaining {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.ticket-remaining {
+  padding-top: 8px;
+  border-top: 1px dashed #777;
+  font-weight: 800;
+}
+
+.ticket-paper {
+  overflow-wrap: anywhere;
+}
+
+.ticket-paper .ticket-item-detail,
+.ticket-paper .ticket-totals > div,
+.ticket-paper .ticket-payments > div {
+  min-width: 0;
+}
+
+/* Impresión térmica */
+
+@media print {
+  @page {
+    margin: 0;
+  }
+
+  body.ticket-print-58,
+  body.ticket-print-80 {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  body.ticket-print-58 *,
+  body.ticket-print-80 * {
+    visibility: hidden !important;
+  }
+
+  body.ticket-print-58 .ticket-print-area,
+  body.ticket-print-58 .ticket-print-area *,
+  body.ticket-print-80 .ticket-print-area,
+  body.ticket-print-80 .ticket-print-area * {
+    visibility: visible !important;
+  }
+
+  body.ticket-print-58 .ticket-print-area,
+  body.ticket-print-80 .ticket-print-area {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    color: black !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+  }
+
+  body.ticket-print-58 .ticket-print-area {
+    width: 58mm !important;
+    padding: 2mm !important;
+    font-size: 9px !important;
+  }
+
+  body.ticket-print-80 .ticket-print-area {
+    width: 80mm !important;
+    padding: 3mm !important;
+    font-size: 11px !important;
+  }
+
+  .ticket-print-area .ticket-separator {
+    border-color: #555 !important;
+  }
+
+  .ticket-print-area .ticket-business,
+  .ticket-print-area .ticket-meta,
+  .ticket-print-area .ticket-items,
+  .ticket-print-area .ticket-totals,
+  .ticket-print-area .ticket-payments,
+  .ticket-print-area .ticket-footer {
+    color: black !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ticket-print-options {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ticket-size-buttons button {
+    flex: 1;
+  }
+}

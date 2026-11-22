@@ -6,10 +6,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 
-export default function CarritoVenta({
-  venta,
-  onCobrar,
-}) {
+export default function CarritoVenta({ venta, onCobrar }) {
   return (
     <aside className="cart-card">
       <div className="cart-title-row">
@@ -21,17 +18,16 @@ export default function CarritoVenta({
           </p>
         </div>
 
-        {venta.carrito.length > 0 &&
-          !venta.ordenSeleccionada && (
-            <button
-              type="button"
-              className="icon-text-button"
-              onClick={venta.nuevaVenta}
-            >
-              <FaTrash />
-              Limpiar
-            </button>
-          )}
+        {venta.carrito.length > 0 && !venta.ordenSeleccionada && (
+          <button
+            type="button"
+            className="icon-text-button"
+            onClick={venta.nuevaVenta}
+          >
+            <FaTrash />
+            Limpiar
+          </button>
+        )}
       </div>
 
       {venta.ordenSeleccionada && (
@@ -47,8 +43,7 @@ export default function CarritoVenta({
           <div>
             <span>Cliente</span>
             <strong>
-              {venta.ordenSeleccionada.clienteNombre ||
-                "Cliente"}
+              {venta.ordenSeleccionada.clienteNombre || "Cliente"}
             </strong>
           </div>
 
@@ -67,26 +62,20 @@ export default function CarritoVenta({
           <div className="cart-empty">
             <FaShoppingCart />
             <strong>Tu venta está vacía</strong>
-            <span>
-              Agrega un producto, servicio u orden.
-            </span>
+            <span>Agrega un producto, servicio u orden.</span>
           </div>
         ) : (
           venta.carrito.map((item) => (
             <div className="cart-line" key={item.id}>
               <div className="cart-line-info">
                 <strong>{item.nombre}</strong>
-                <small>
-                  ${Number(item.precio).toFixed(2)} c/u
-                </small>
+                <small>${Number(item.precio).toFixed(2)} c/u</small>
 
                 {!venta.ordenSeleccionada && (
                   <div className="quantity-control">
                     <button
                       type="button"
-                      onClick={() =>
-                        venta.disminuirCantidad(item)
-                      }
+                      onClick={() => venta.disminuirCantidad(item)}
                     >
                       <FaMinus />
                     </button>
@@ -95,9 +84,7 @@ export default function CarritoVenta({
 
                     <button
                       type="button"
-                      onClick={() =>
-                        venta.aumentarCantidad(item)
-                      }
+                      onClick={() => venta.aumentarCantidad(item)}
                     >
                       <FaPlus />
                     </button>
@@ -105,9 +92,7 @@ export default function CarritoVenta({
                     <button
                       type="button"
                       className="delete"
-                      onClick={() =>
-                        venta.eliminarDelCarrito(item.id)
-                      }
+                      onClick={() => venta.eliminarDelCarrito(item.id)}
                     >
                       <FaTrash />
                     </button>
@@ -116,11 +101,7 @@ export default function CarritoVenta({
               </div>
 
               <strong className="cart-line-total">
-                $
-                {(
-                  Number(item.cantidad) *
-                  Number(item.precio)
-                ).toFixed(2)}
+                ${(Number(item.cantidad) * Number(item.precio)).toFixed(2)}
               </strong>
             </div>
           ))
@@ -139,9 +120,23 @@ export default function CarritoVenta({
         </div>
 
         <div className="cart-grand-total">
-          <span>Total</span>
+          <span>Total de la venta</span>
           <strong>${venta.total.toFixed(2)}</strong>
         </div>
+
+        {venta.ordenSeleccionada && (
+          <div className="cart-advance">
+            <span>Anticipo recibido en Taller</span>
+            <strong>-${venta.anticipoAplicado.toFixed(2)}</strong>
+          </div>
+        )}
+
+        {venta.ordenSeleccionada && (
+          <div className="cart-remaining">
+            <span>Restante por cobrar</span>
+            <strong>${venta.totalPorCobrar.toFixed(2)}</strong>
+          </div>
+        )}
       </div>
 
       <button
@@ -151,7 +146,7 @@ export default function CarritoVenta({
         disabled={venta.carrito.length === 0}
       >
         Cobrar
-        <strong>${venta.total.toFixed(2)}</strong>
+        <strong>${venta.totalPorCobrar.toFixed(2)}</strong>
       </button>
     </aside>
   );

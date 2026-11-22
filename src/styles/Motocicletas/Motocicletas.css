@@ -1,0 +1,604 @@
+.motos-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+}
+
+.motos-header,
+.motos-toolbar,
+.moto-card,
+.moto-historial {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.motos-header h1 {
+  margin: 4px 0;
+}
+
+.motos-header p {
+  color: var(--muted);
+}
+
+.motos-toolbar input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.motos-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, 260px), 1fr)
+  );
+  gap: 16px;
+  min-width: 0;
+}
+
+.moto-card {
+  min-width: 0;
+}
+
+.moto-card button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .motos-header,
+  .motos-toolbar,
+  .moto-card,
+  .moto-historial {
+    padding: 16px;
+  }
+}
+
+/*EStilos para agregar o modificar moto*/
+
+.moto-form-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+}
+
+.moto-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 24px;
+}
+
+.moto-form-header h2 {
+  margin: 6px 0;
+}
+
+.moto-form-header p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.moto-form-page form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.moto-form-card {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  min-width: 0;
+}
+
+.moto-form-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 22px;
+  font-size: 17px;
+}
+
+.moto-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.moto-form-page .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.moto-form-page .form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.moto-form-page .form-input,
+.moto-form-page .form-select,
+.moto-form-page .form-textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+}
+
+.moto-form-page .form-input:focus,
+.moto-form-page .form-select:focus,
+.moto-form-page .form-textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.moto-form-page .form-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.moto-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.moto-form-page .btn-primary,
+.moto-form-page .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.moto-form-page .btn-primary {
+  background: var(--primary);
+  color: white;
+  border: none;
+}
+
+.moto-form-page .btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.moto-form-page button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.moto-form-error {
+  padding: 14px;
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+@media (max-width: 1000px) {
+  .moto-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .moto-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .moto-form-card,
+  .moto-form-header {
+    padding: 16px;
+  }
+
+  .moto-form-actions button {
+    flex: 1;
+  }
+}
+
+/* ============================
+   DETALLE MOTOCICLETA
+============================ */
+
+.moto-detalle-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+}
+
+.moto-detalle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  padding: 24px;
+  border-radius: 14px;
+}
+
+.moto-detalle-header h2 {
+  margin: 5px 0;
+  color: var(--text);
+}
+
+.moto-detalle-header p,
+.moto-detalle-subtitle {
+  color: var(--muted);
+}
+
+.moto-detalle-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.moto-detalle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  min-width: 0;
+}
+
+.moto-detalle-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  color: var(--text);
+  min-width: 0;
+}
+
+.moto-detalle-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 22px;
+  font-size: 17px;
+}
+
+.moto-detalle-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.moto-detalle-info > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.moto-detalle-info span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.moto-detalle-info strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.moto-detalle-observaciones {
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--surface-2);
+  border-radius: 8px;
+}
+
+.moto-detalle-observaciones h4 {
+  margin: 0 0 8px;
+}
+
+.moto-detalle-observaciones p {
+  margin: 0;
+}
+
+.moto-detalle-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.moto-historial-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.moto-historial-item {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.moto-historial-top,
+.moto-historial-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.moto-historial-top h4 {
+  margin: 0 0 5px;
+}
+
+.moto-historial-top span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.moto-estado {
+  padding: 5px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.moto-historial-item p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.moto-historial-item ul {
+  padding-left: 20px;
+}
+
+.moto-historial-footer {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.moto-detalle-page .btn-primary,
+.moto-detalle-page .btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.moto-detalle-page .btn-primary {
+  background: var(--primary);
+  color: white;
+  border: none;
+}
+
+.moto-detalle-page .btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+  .moto-detalle-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .moto-detalle-header,
+  .moto-detalle-card {
+    padding: 16px;
+  }
+
+  .moto-detalle-info {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .moto-detalle-actions {
+    width: 100%;
+  }
+
+  .moto-detalle-actions button {
+    flex: 1;
+  }
+
+  .moto-historial-item {
+    padding: 14px;
+  }
+}
+
+
+/*Historial*/
+
+.historial-servicios {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  color: var(--text);
+}
+
+.historial-encabezado h3,
+.historial-detalles h5 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+}
+
+.historial-encabezado p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.historial-resumen {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.historial-kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.historial-kpi span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.historial-kpi strong {
+  font-size: 23px;
+  color: var(--text);
+}
+
+.historial-filtros {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.historial-filtros select {
+  width: min(100%, 260px);
+  padding: 10px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.historial-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-left: 2px solid var(--border);
+  margin-left: 12px;
+  padding-left: 24px;
+}
+
+.historial-registro {
+  position: relative;
+  min-width: 0;
+}
+
+.historial-registro::before {
+  content: "";
+  position: absolute;
+  left: -32px;
+  top: 10px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--surface);
+}
+
+.historial-fecha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.historial-registro-cuerpo {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.historial-registro-top,
+.historial-registro-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.historial-registro-top h4 {
+  margin: 0;
+}
+
+.historial-registro-cuerpo p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.historial-detalles {
+  background: var(--surface-2);
+  padding: 14px;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+
+.historial-detalles ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.historial-registro-footer {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  margin-top: 18px;
+}
+
+@media (max-width: 768px) {
+  .historial-resumen {
+    grid-template-columns: 1fr;
+  }
+
+  .historial-registro-cuerpo {
+    padding: 15px;
+  }
+}
