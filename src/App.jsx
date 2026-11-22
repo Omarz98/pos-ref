@@ -43,11 +43,12 @@ import Inventario from "./pages/inventario/Inventario";
 import Motocicletas from "./pages/Motocicletas/Motocicletas";
 import MotoForm from "./pages/Motocicletas/MotoForm";
 import MotoDetalle from "./pages/Motocicletas/MotoDetalle";
+import ReportesLayout from "./pages/reportes/ReportesLayout";
+import ReporteVentas from "./pages/reportes/ReporteVentas";
+import ReportesDashboard from "./pages/reportes/ReportesDashboard";
 
 function RedireccionInicio() {
-  const usuario = JSON.parse(
-    localStorage.getItem("usuario") || "null"
-  );
+  const usuario = JSON.parse(localStorage.getItem("usuario") || "null");
 
   const permisos = usuario?.permisos || [];
 
@@ -222,6 +223,26 @@ function App() {
               }
             >
               <Route path="/inventario" element={<Inventario />} />
+            </Route>
+
+            {/* REPORTES */}
+            <Route
+              element={
+                <PermissionRoute
+                  permiso="REPORTE_VER"
+                  roles={["ADMINISTRADOR", "ENCARGADO"]}
+                />
+              }
+            >
+              <Route path="reportes" element={<ReportesLayout />}>
+                <Route index element={<ReportesDashboard />} />
+
+                <Route
+                  element={<PermissionRoute permiso="REPORTE_VENTAS_VER" />}
+                >
+                  <Route path="ventas" element={<ReporteVentas />} />
+                </Route>
+              </Route>
             </Route>
 
             <Route
