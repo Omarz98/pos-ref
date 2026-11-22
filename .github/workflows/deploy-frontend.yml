@@ -1,3 +1,4 @@
+
 name: POSREF - Deploy Frontend
 
 # Despliegue automatico y manual
@@ -16,16 +17,11 @@ concurrency:
   group: posref-frontend-production
   cancel-in-progress: false
 
-
-# Evitar despliegues simultaneos
-concurrency:
-  group: posref-frontend-production
-  cancel-in-progress: false
-
 jobs:
   deploy:
     name: Compilar y desplegar React
     runs-on: ubuntu-latest
+
 
     steps:
       # 1. Obtener codigo del repositorio
