@@ -1,12 +1,21 @@
-
 name: POSREF - Deploy Frontend
 
-# Despliegue manual desde GitHub Actions
+# Despliegue automatico y manual
 on:
+  push:
+    branches:
+      - master
+
   workflow_dispatch:
 
 permissions:
   contents: read
+
+# Evitar despliegues simultaneos
+concurrency:
+  group: posref-frontend-production
+  cancel-in-progress: false
+
 
 # Evitar despliegues simultaneos
 concurrency:
